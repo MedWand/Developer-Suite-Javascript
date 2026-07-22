@@ -1,0 +1,77 @@
+:root { font-family:"Segoe UI",Arial,sans-serif; color:#000; background:#a0a0a0; font-size:16px; }
+* { box-sizing:border-box; }
+html,body { margin:0; min-width:320px; min-height:100%; }
+body { min-height:100vh; background:#a0a0a0; }
+button,input,textarea,select { font:inherit; letter-spacing:0; }
+button { cursor:pointer; }
+button:disabled { cursor:default; filter:grayscale(1); opacity:.38; }
+.app-header { height:123px; display:flex; align-items:center; overflow:hidden; background:#f0f0f0; border-bottom:1px solid #888; }
+.brand-logo { flex:0 0 311px; width:311px; height:119px; object-fit:contain; margin:1px 0 2px; }
+.tool-nav { height:123px; display:flex; align-items:center; flex:1; min-width:0; overflow-x:auto; overflow-y:hidden; }
+.nav-item { flex:0 0 144px; width:144px; height:119px; margin:1px 0 2px; padding:0; border:0; background:transparent; }
+.nav-item:hover:not(:disabled),.nav-item.active { background:#efefef; }
+.nav-item:active:not(:disabled) { opacity:.7; }
+.nav-item img { display:block; max-width:100%; max-height:100%; margin:auto; object-fit:contain; }
+.toolbar-divider { flex:0 0 1px; align-self:stretch; margin:0 15px; background:#808080; }
+.summary-tool { visibility:visible; }
+.exit-tool { visibility:visible; }
+.status-dot { width:8px; height:8px; border-radius:50%; background:#777; }.status-dot.connected { background:#00a000; }
+.home-connection { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:12px 15px; border-bottom:1px solid #666; background:#f0f0f0; }
+.home-connection-status { display:flex; align-items:center; gap:9px; font-weight:600; }
+.connect-button { min-width:150px; min-height:42px; border:1px solid #777; padding:4px 18px; background:#fff; }
+.connect-button:hover:not(:disabled) { background:#e5e5e5; }
+.app-shell { min-height:calc(100vh - 123px); padding-bottom:50px; background:#808080; }
+.workspace { height:calc(100vh - 173px); min-height:600px; overflow:auto; }
+.view { display:none; height:100%; min-height:600px; background:#808080; }
+.view.active { display:flex; flex-direction:column; }
+.view-heading { flex:0 0 50px; height:50px; display:flex; align-items:center; justify-content:space-between; padding:0 10px; background:#0078d7; color:#fff; }
+.view-heading h1 { margin:0; font-size:16px; font-weight:700; }
+.state-badge { font-size:13px; font-weight:400; }
+.placeholder-info { flex:1; overflow:auto; padding:15px; background:#a0a0a0; font-size:24px; text-align:left; }
+.placeholder-info h1 { margin:0; font-size:24px; font-weight:400; }
+.placeholder-info h1:not(:first-child) { margin-top:26px; }
+.placeholder-info hr { width:420px; max-width:100%; margin:4px 0 10px; border:0; border-top:1px solid #333; }
+.placeholder-info dl { margin:0; }
+.placeholder-info dl div { display:flex; gap:8px; min-width:0; }
+.placeholder-info dt { flex:0 0 auto; }.placeholder-info dd { margin:0; overflow-wrap:anywhere; }
+.details-panel,.activity-panel { margin:0; border:1px solid #555; background:#fff; }
+.details-panel { display:grid; grid-template-columns:1fr 1fr; }
+.details-panel div { min-height:72px; padding:10px; border-right:1px solid #ccc; border-bottom:1px solid #ccc; }
+.details-panel div:nth-child(even) { border-right:0; }.details-panel div:nth-last-child(-n+2) { border-bottom:0; }
+.details-panel dt { font-size:12px; color:#555; }.details-panel dd { margin:5px 0 0; overflow-wrap:anywhere; font-weight:600; }
+.activity-panel h2,.mode-panel h2 { margin:0; padding:4px; background:#0078d7; color:#fff; text-align:center; font-size:16px; }
+.activity-log { list-style:none; margin:0; padding:10px; max-height:390px; overflow:auto; }.activity-log li { display:grid; grid-template-columns:80px 1fr; padding:8px 0; border-bottom:1px solid #ddd; font-size:13px; }.activity-log time { color:#555; }
+.sensor-view { text-align:center; }
+.measurement { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; gap:10px; background:#696969; color:#fff; }
+.measurement span { font-size:64px; font-weight:400; }.measurement small { font-size:64px; }.measurement b { font-weight:400; }
+.dual-reading { flex:1; min-height:0; display:grid; grid-template-rows:1fr 4px 1fr; background:#555; }
+.dual-reading .measurement:first-child { grid-row:1; }.dual-reading .measurement:last-child { grid-row:3; }
+.sensor-status { flex:0 0 50px; height:50px; display:flex; align-items:center; justify-content:center; background:#fff; color:#000; }
+.sensor-action,.action-button { flex:0 0 50px; width:100%; height:50px; padding:0; border:0; border-radius:0; background:#00c000; color:#fff; font-weight:400; }
+.sensor-action.stop,.action-button.stop { background:#c00000; }
+.primary-button,.secondary-button { min-height:38px; padding:0 15px; border:1px solid #888; border-radius:0; background:#eee; color:#000; }
+.ecg-stage { flex:1; min-height:0; overflow:auto; display:flex; align-items:center; padding:10px; background:#696969; }
+.ecg-stage canvas { display:block; width:100%; height:auto; max-height:100%; background:#fff; }
+.action-row { flex:0 0 42px; display:flex; align-items:center; justify-content:center; gap:8px; background:#a0a0a0; }
+.action-row .secondary-button { min-height:32px; }
+.media-grid { flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,1fr) 111px; background:#a0a0a0; }
+.stethoscope-stage { min-width:0; min-height:0; display:grid; grid-template-rows:minmax(0,1fr) 82px; background:#000; }
+.audio-visual { display:flex; justify-content:center; align-items:center; gap:9px; background:#000; }
+.audio-visual i { width:7px; height:35px; background:#ddd; }.audio-visual i:nth-child(2),.audio-visual i:nth-child(6){height:70px}.audio-visual i:nth-child(3),.audio-visual i:nth-child(5){height:110px}.audio-visual i:nth-child(4){height:155px}.audio-visual.live i { animation:pulse 1s ease-in-out infinite alternate; }.audio-visual.live i:nth-child(even){animation-delay:.25s}@keyframes pulse{to{transform:scaleY(.35)}}
+.stethoscope-controls { display:grid; grid-template-columns:1fr 1fr; gap:30px; padding:6px 20px; background:#a0a0a0; color:#fff; }.stethoscope-controls label { display:grid; align-content:center; gap:6px; text-align:center; font-size:16px; font-weight:700; }.stethoscope-controls input { width:100%; }
+.mode-panel { margin:8px; }.mode-panel h2 { margin-bottom:8px; padding:3px 0; }
+.mode-control.vertical { display:flex; flex-direction:column; gap:8px; }
+.mode-control.vertical button { width:95px; min-height:100px; padding:8px 2px; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid #aaa; background:#eee; color:#000; font-size:12px; }
+.mode-control.vertical button.active { border:2px solid red; background:#fff; }.mode-control.vertical img { display:block; width:64px; height:48px; object-fit:contain; }
+.camera-layout { flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,1fr) 111px; grid-template-rows:minmax(0,1fr) 152px; background:#a0a0a0; }
+.video-frame { grid-column:1; min-height:0; display:grid; place-items:center; position:relative; overflow:hidden; border:1px solid #555; background:#000; }
+.video-frame video { width:100%; height:100%; object-fit:contain; }.video-frame span { position:absolute; color:#ddd; }
+.camera-layout>.mode-panel { grid-column:2; grid-row:1 / span 2; }
+.camera-settings { grid-column:1; grid-row:2; display:grid; grid-template-columns:minmax(150px,1fr) minmax(150px,1fr) auto; align-items:center; gap:20px; padding:6px 20px; color:#fff; }
+.camera-settings label { display:grid; gap:5px; text-align:center; font-size:16px; font-weight:700; }.camera-settings select { height:28px; }.camera-buttons { display:flex; gap:4px; }.camera-buttons button { width:36px; height:32px; border:1px solid #777; background:#eee; }
+.camera-control-group { display:grid; gap:6px; }.camera-control-group>button,.otoscope-controls button { min-height:30px; border:1px solid #777; background:#eee; color:#000; }
+.otoscope-controls { display:grid; grid-template-columns:auto auto; align-items:center; gap:4px 8px; font-size:12px; }.otoscope-controls[hidden]{display:none}.otoscope-controls>div { display:flex; gap:4px; }.otoscope-controls button { min-width:34px; }.direction-pad { display:grid!important; grid-template-columns:1fr 1fr; }
+.status-bar { position:fixed; left:0; right:0; bottom:0; z-index:5; height:50px; display:flex; align-items:center; padding:0 10px; overflow:hidden; background:#696969; color:#f0f0f0; white-space:nowrap; text-overflow:ellipsis; }
+.startup-notice { position:fixed; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:32px; padding:24px 32px; background:#808080; color:#fff; }.startup-notice[hidden]{display:none}.startup-notice p { width:min(1100px,100%); margin:0; font-size:24px; line-height:1.35; text-align:center; }.notice-button { width:220px; height:56px; border:0; background:#00c000; color:#fff; font-size:18px; font-weight:700; }
+@media(max-width:1100px){.app-header{height:100px}.brand-logo{width:260px;flex-basis:260px;height:96px}.tool-nav{height:100px}.nav-item{width:116px;flex-basis:116px;height:96px}.app-shell{min-height:calc(100vh - 100px)}.workspace{height:calc(100vh - 150px)}}
+@media(max-width:700px){.app-header{height:78px}.brand-logo{width:165px;flex-basis:165px;height:74px}.tool-nav{height:78px}.nav-item{width:75px;flex-basis:75px;height:74px}.toolbar-divider{display:none}.home-connection{min-height:64px}.connect-button{min-width:120px}.app-shell{min-height:calc(100vh - 78px)}.workspace{height:calc(100vh - 128px);min-height:500px}.view{min-height:500px}.placeholder-info{font-size:16px}.placeholder-info h1{font-size:18px}.measurement span,.measurement small{font-size:42px}.media-grid,.camera-layout{grid-template-columns:minmax(0,1fr) 100px}.mode-control.vertical button{width:84px;min-height:82px}.camera-layout{grid-template-rows:minmax(260px,1fr) auto}.camera-settings{grid-template-columns:1fr;gap:8px;padding:8px;font-size:12px}.otoscope-controls{grid-template-columns:1fr 1fr}.startup-notice{padding:20px 16px}.startup-notice p{width:calc(100vw - 32px);max-width:100%;font-size:16px;overflow-wrap:anywhere}.notice-button{max-width:calc(100vw - 32px)}}

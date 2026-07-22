@@ -1,0 +1,53 @@
+export function createTemperatureSensor(decl, getController, getActiveSensor, setActiveSensor, stopActiveSensor, formatReading, errorText, handleActionError) {
+  const $button = $("#view-temperature .sensor-action");
+
+  async function toggle() {
+    if (getActiveSensor() === "temperature") {
+      await stop();
+      return;
+    }
+
+    await stopActiveSensor();
+    const started = await getController().startThermometer();
+    if (started) {
+      setActiveSensor("temperature");
+      $button.text("Stop").addClass("stop");
+    }
+  }
+
+  async function stop() {
+    if (getActiveSensor() !== "temperature") return;
+    await getController().stopSensor();
+    setActiveSensor(null);
+    $button.text("Start").removeClass("stop");
+    setStatus("Ready");
+  }
+
+  function activate() {
+    $("#temperature-value").text("--");
+    $button.text("Start").removeClass("stop");
+    setStatus("Ready");
+  }
+
+  function handleReading(reading) {
+    if (reading.sensorType !== decl.MedWandSensor.Thermometer) return;
+    $("#temperature-value").text(formatReading(reading.tempObject));
+  }
+
+  function handleReadingState(value) {
+    setStatus(String(value));
+  }
+
+  function handleDeviceError(error) {
+    setStatus(`Error - ${errorText(error)}`);
+    $button.prop("disabled", true).text("").removeClass("stop");
+  }
+
+  function setStatus(value) {
+    $("#view-temperature .reading-state").text(value);
+  }
+
+  $button.on("click", () => toggle().catch(handleActionError));
+
+  return { activate, stop, handleReading, handleReadingState, handleDeviceError };
+}
