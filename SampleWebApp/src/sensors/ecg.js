@@ -1,8 +1,14 @@
-export function createEcgSensor(getController, setActiveSensor, stopActiveSensor, setNavigationLocked, errorText, log, downloadDataUrl) {
+export function createEcgSensor(
+  getController,
+  setActiveSensor,
+  stopActiveSensor,
+  setNavigationLocked,
+  errorText,
+  log,
+) {
   const $recordButton = $("#ecg-record");
   let captureCount = 0;
   let recording = false;
-  let lastStrip = null;
 
   function attachEvents() {
     const module = getController().ecg;
@@ -28,7 +34,10 @@ export function createEcgSensor(getController, setActiveSensor, stopActiveSensor
     setActiveSensor(null);
     recording = false;
     setNavigationLocked(false);
-    $recordButton.prop("disabled", true).text("Start Recording").removeClass("stop");
+    $recordButton
+      .prop("disabled", true)
+      .text("Start Recording")
+      .removeClass("stop");
     setStatus("Not Monitoring");
   }
 
@@ -50,9 +59,15 @@ export function createEcgSensor(getController, setActiveSensor, stopActiveSensor
   }
 
   function handleRecordedStrip(capture) {
-    const data = typeof capture === "string" ? capture : getController().ecgBmpFromCapture(capture);
-    if (data) downloadDataUrl(data, `medwand-ecg-${Date.now()}.bmp`);
-    lastStrip = data;
+    const data =
+      typeof capture === "string"
+        ? capture
+        : getController().ecgBmpFromCapture(capture);
+    if (data) {
+      $("<img>", { src: data, alt: "Captured ECG strip" })
+        .attr("data-captured-at", new Date().toISOString())
+        .appendTo("#ecg-captures");
+    }
     captureCount += 1;
     setStatus("Monitoring");
     log("ECG strip captured");
@@ -67,7 +82,10 @@ export function createEcgSensor(getController, setActiveSensor, stopActiveSensor
   function handleDeviceError(error) {
     recording = false;
     setNavigationLocked(false);
-    $recordButton.prop("disabled", true).text("Start Recording").removeClass("stop");
+    $recordButton
+      .prop("disabled", true)
+      .text("Start Recording")
+      .removeClass("stop");
     setStatus(`Error - ${errorText(error)}`);
   }
 
@@ -77,5 +95,12 @@ export function createEcgSensor(getController, setActiveSensor, stopActiveSensor
 
   $recordButton.on("click", toggleRecording);
 
-  return { attachEvents, activate, stop, handleReading, handleReadingState, handleDeviceError, getLastStrip: () => lastStrip };
+  return {
+    attachEvents,
+    activate,
+    stop,
+    handleReading,
+    handleReadingState,
+    handleDeviceError,
+  };
 }

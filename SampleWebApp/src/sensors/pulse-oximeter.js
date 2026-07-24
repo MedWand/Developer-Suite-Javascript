@@ -1,5 +1,16 @@
-export function createPulseOximeterSensor(decl, getController, getActiveSensor, setActiveSensor, stopActiveSensor, formatReading, errorText, handleActionError) {
+export function createPulseOximeterSensor(
+  decl,
+  getController,
+  getActiveSensor,
+  setActiveSensor,
+  stopActiveSensor,
+  formatReading,
+  errorText,
+  handleActionError,
+) {
   const $button = $("#view-spo2 .sensor-action");
+  let latestSpo2 = "--";
+  let latestPulse = "--";
 
   async function toggle() {
     if (getActiveSensor() === "spo2") {
@@ -31,8 +42,10 @@ export function createPulseOximeterSensor(decl, getController, getActiveSensor, 
 
   function handleReading(reading) {
     if (reading.sensorType !== decl.MedWandSensor.PulseOximeter) return;
-    $("#spo2-value").text(formatReading(reading.spo2));
-    $("#pulse-value").text(formatReading(reading.pulseRate));
+    latestSpo2 = formatReading(reading.spo2);
+    latestPulse = formatReading(reading.pulseRate);
+    $("#spo2-value").text(latestSpo2);
+    $("#pulse-value").text(latestPulse);
   }
 
   function handleReadingState(value) {
@@ -40,8 +53,9 @@ export function createPulseOximeterSensor(decl, getController, getActiveSensor, 
   }
 
   function handleDeviceError(error) {
+    setActiveSensor(null);
     setStatus(`Error - ${errorText(error)}`);
-    $button.prop("disabled", true).text("").removeClass("stop");
+    $button.prop("disabled", false).text("Start").removeClass("stop");
   }
 
   function setStatus(value) {
@@ -50,5 +64,12 @@ export function createPulseOximeterSensor(decl, getController, getActiveSensor, 
 
   $button.on("click", () => toggle().catch(handleActionError));
 
-  return { activate, stop, handleReading, handleReadingState, handleDeviceError };
+  return {
+    activate,
+    stop,
+    handleReading,
+    handleReadingState,
+    handleDeviceError,
+    getLatestValues: () => ({ spo2: latestSpo2, pulse: latestPulse }),
+  };
 }

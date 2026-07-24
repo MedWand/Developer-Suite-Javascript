@@ -1,5 +1,15 @@
-export function createTemperatureSensor(decl, getController, getActiveSensor, setActiveSensor, stopActiveSensor, formatReading, errorText, handleActionError) {
+export function createTemperatureSensor(
+  decl,
+  getController,
+  getActiveSensor,
+  setActiveSensor,
+  stopActiveSensor,
+  formatReading,
+  errorText,
+  handleActionError,
+) {
   const $button = $("#view-temperature .sensor-action");
+  let latestValue = "--";
 
   async function toggle() {
     if (getActiveSensor() === "temperature") {
@@ -31,7 +41,8 @@ export function createTemperatureSensor(decl, getController, getActiveSensor, se
 
   function handleReading(reading) {
     if (reading.sensorType !== decl.MedWandSensor.Thermometer) return;
-    $("#temperature-value").text(formatReading(reading.tempObject));
+    latestValue = formatReading(reading.tempObject);
+    $("#temperature-value").text(latestValue);
   }
 
   function handleReadingState(value) {
@@ -39,8 +50,9 @@ export function createTemperatureSensor(decl, getController, getActiveSensor, se
   }
 
   function handleDeviceError(error) {
+    setActiveSensor(null);
     setStatus(`Error - ${errorText(error)}`);
-    $button.prop("disabled", true).text("").removeClass("stop");
+    $button.prop("disabled", false).text("Start").removeClass("stop");
   }
 
   function setStatus(value) {
@@ -49,5 +61,12 @@ export function createTemperatureSensor(decl, getController, getActiveSensor, se
 
   $button.on("click", () => toggle().catch(handleActionError));
 
-  return { activate, stop, handleReading, handleReadingState, handleDeviceError };
+  return {
+    activate,
+    stop,
+    handleReading,
+    handleReadingState,
+    handleDeviceError,
+    getLatestValue: () => latestValue,
+  };
 }

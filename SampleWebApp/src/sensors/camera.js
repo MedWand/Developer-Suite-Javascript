@@ -1,4 +1,13 @@
-export function createCameraSensor(decl, getController, getActiveView, getActiveSensor, setActiveSensor, stopActiveSensor, errorText, log) {
+export function createCameraSensor(
+  decl,
+  getController,
+  getActiveView,
+  getActiveSensor,
+  setActiveSensor,
+  stopActiveSensor,
+  errorText,
+  log,
+) {
   let captureCount = 0;
   let frameReady = false;
   let capturePending = false;
@@ -18,40 +27,93 @@ export function createCameraSensor(decl, getController, getActiveView, getActive
   async function selectMode($button) {
     const modeName = $button.data("cameraMode");
     await stopActiveSensor();
+
     frameReady = false;
     manualFocus = false;
-
-    const started = await getController().setCameraMode($("#camera-preview")[0], decl.CameraModes[modeName]);
-    if (started && modeName !== "Off") setActiveSensor("camera");
-
-    $("[data-camera-mode]").removeClass("active");
-    $button.addClass("active");
-    $("#camera-empty").prop("hidden", modeName !== "Off");
-    $("#otoscope-controls").prop("hidden", modeName !== "Otoscope");
+    setStatus(modeName === "Off" ? "Ready" : "Starting");
     $("#camera-capture").prop("disabled", true);
 
-    if (started && modeName !== "Off") {
-      $("#camera-model").text(getController().cameraModel);
-      configureControls();
-      configureFocusRange();
-      setStatus("On");
-      return;
+    let started = false;
+    try {
+      const controller = getController();
+      const preview = $("#camera-preview")[0];
+      started = await controller.setCameraMode(
+        preview,
+        decl.CameraModes[modeName],
+      );
+      if (modeName === "Off") clearPreview();
+      if (!started && modeName !== "Off")
+        throw new Error(cameraStartupError(modeName));
+
+      if (started && modeName !== "Off") {
+        setActiveSensor("camera");
+      }
+
+      $("[data-camera-mode]").removeClass("active");
+      $button.addClass("active");
+      $("#camera-empty").prop("hidden", modeName !== "Off");
+      $("#otoscope-controls").prop("hidden", modeName !== "Otoscope");
+
+      if (started && modeName !== "Off") {
+        configureControls();
+        await configureFocusControls();
+        setStatus("On");
+        return;
+      }
+      hideControls();
+      setStatus("Ready");
+    } catch (error) {
+      await releaseCamera();
+      throw error;
     }
-    if (modeName !== "Off") throw new Error("Camera preview did not start.");
-    setStatus("Ready");
   }
 
   async function stop() {
     if (getActiveSensor() !== "camera") return;
-    await getController().setCameraMode($("#camera-preview")[0], decl.CameraModes.Off);
+    await getController().setCameraMode(
+      $("#camera-preview")[0],
+      decl.CameraModes.Off,
+    );
+    clearPreview();
     setActiveSensor(null);
     frameReady = false;
     capturePending = false;
     manualFocus = false;
     $("#camera-capture").prop("disabled", true).text("Capture");
-    $("#led-toggle, #focus-mode").prop("disabled", true);
-    $("#otoscope-controls").prop("hidden", true);
+    hideControls();
     setStatus("Ready");
+  }
+
+  async function releaseCamera() {
+    await getController()
+      .setCameraMode($("#camera-preview")[0], decl.CameraModes.Off)
+      .catch(() => false);
+    clearPreview();
+    setActiveSensor(null);
+    frameReady = false;
+    capturePending = false;
+    manualFocus = false;
+    $("#camera-capture").prop("disabled", true).text("Capture");
+    hideControls();
+  }
+
+  function hideControls() {
+    $("#led-controls, #focus-controls, #otoscope-controls").prop(
+      "hidden",
+      true,
+    );
+    $("#led-intensity, #led-toggle, #focus-intensity, #focus-mode").prop(
+      "disabled",
+      true,
+    );
+  }
+
+  function clearPreview() {
+    const canvas = $("#camera-preview")[0];
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.fillStyle = "#000";
+    context.fillRect(0, 0, canvas.width, canvas.height);
   }
 
   function handleFrame(bytes) {
@@ -62,7 +124,8 @@ export function createCameraSensor(decl, getController, getActiveView, getActive
   }
 
   function capture() {
-    if (!getController()?.cameraIsMonitoring || !frameReady) throw new Error("The camera preview has not produced a frame yet.");
+    if (!getController()?.cameraIsMonitoring || !frameReady)
+      throw new Error("The camera preview has not produced a frame yet.");
     $("#camera-capture").prop("disabled", true).text("Capturing...");
     setStatus("Capturing");
     capturePending = true;
@@ -83,25 +146,62 @@ export function createCameraSensor(decl, getController, getActiveView, getActive
   function configureControls() {
     const maximum = Math.max(0, getController().cameraLedIntensityMax || 0);
     const intensity = Number(getController().ledIntensity || 0);
-    $("#led-intensity").attr("max", Math.max(1, maximum)).val(intensity).prop("disabled", !getController().cameraLedIntensityAdjustable);
+    const adjustable = Boolean(getController().cameraLedIntensityAdjustable);
+    $("#led-controls").prop("hidden", maximum === 0);
+    $("#led-intensity")
+      .prop("hidden", !adjustable)
+      .attr("max", Math.max(1, maximum))
+      .val(intensity)
+      .prop("disabled", !adjustable);
     $("#led-output").text(intensity);
-    $("#led-toggle").prop("disabled", maximum === 0).text(intensity > 0 ? "Turn off" : "Turn on");
+    $("#led-toggle")
+      .prop("hidden", adjustable)
+      .prop("disabled", maximum === 0)
+      .text(intensity > 0 ? "Turn off" : "Turn on");
   }
 
-  function configureFocusRange() {
-    const track = $("#camera-preview")[0].srcObject?.getVideoTracks?.()[0];
-    const focus = track?.getCapabilities?.().focusDistance;
+  async function configureFocusControls() {
+    const cameraModel = getController().camera?.cameraModel;
+    const focus = cameraModel?.focusInfo;
     const $slider = $("#focus-intensity");
-    if (!focus) {
+
+    if (!focus?.hasManualFocus) {
+      $("#focus-controls").prop("hidden", true);
       $slider.prop("disabled", true);
       $("#focus-mode").prop("disabled", true);
-      $("#focus-output").text("Auto");
       return;
     }
-    const value = track.getSettings?.().focusDistance ?? focus.min;
-    $slider.attr({ min: focus.min, max: focus.max, step: focus.step || "any" }).val(value).prop("disabled", !manualFocus);
-    $("#focus-mode").prop("disabled", false).text(manualFocus ? "Use Auto" : "Use Manual");
+
+    if (focus.hasAutoFocus) {
+      await getController().setCameraFocusMode(decl.FocusModes.Auto, true);
+      manualFocus = false;
+    }
+
+    const value = Number(
+      cameraModel.selectedFocusModeValue || focus.focusMinimum,
+    );
+    $("#focus-controls").prop("hidden", false);
+    $("#focus-mode")
+      .prop("hidden", !focus.hasManualFocus)
+      .prop("disabled", !focus.hasManualFocus)
+      .text("Use Manual");
+    $("#focus-value-control").prop("hidden", !focus.hasManualFocus);
+    $slider
+      .attr({ min: focus.focusMinimum, max: focus.focusMaximum, step: 1 })
+      .val(value)
+      .prop("disabled", true);
     $("#focus-output").text(manualFocus ? `Manual (${value})` : "Auto");
+    $("#focus-value-output").text(value);
+  }
+
+  function cameraStartupError(modeName) {
+    const controller = getController();
+    const detail = String(
+      controller?.cameraLastError ?? controller?.CameraLastError ?? "",
+    ).trim();
+    return detail
+      ? `${modeName} preview did not start. ${detail}`
+      : `${modeName} preview did not start. No additional camera error was reported.`;
   }
 
   function runCommand(command) {
@@ -118,7 +218,15 @@ export function createCameraSensor(decl, getController, getActiveView, getActive
 
   function handleKeydown(event) {
     if (getActiveView() !== "camera" || getActiveSensor() !== "camera") return;
-    const commands = { ArrowLeft: "move-left", ArrowRight: "move-right", ArrowUp: "move-up", ArrowDown: "move-down", PageUp: "zoom-in", PageDown: "zoom-out", Enter: "reset" };
+    const commands = {
+      ArrowLeft: "move-left",
+      ArrowRight: "move-right",
+      ArrowUp: "move-up",
+      ArrowDown: "move-down",
+      PageUp: "zoom-in",
+      PageDown: "zoom-out",
+      Enter: "reset",
+    };
     const command = commands[event.key];
     if (!command) return;
     event.preventDefault();
@@ -126,8 +234,12 @@ export function createCameraSensor(decl, getController, getActiveView, getActive
   }
 
   function handleReading() {}
-  function handleReadingState(value) { setStatus(String(value)); }
-  function handleDeviceError(error) { handleError(error); }
+  function handleReadingState(value) {
+    setStatus(String(value));
+  }
+  function handleDeviceError(error) {
+    handleError(error);
+  }
 
   function handleError(error) {
     const detail = errorText(error);
@@ -137,40 +249,101 @@ export function createCameraSensor(decl, getController, getActiveView, getActive
 
   function setStatus(value) {
     const mode = getController()?.cameraMode || decl.CameraModes.Off;
-    const timer = getController()?.cameraHasOnTimer && mode !== decl.CameraModes.Off ? ` (${getController().cameraOnTimeMax}s available)` : "";
-    $("#view-camera .reading-state").text(`${mode} : ${value}${timer} [${captureCount} Captured]`);
+    const timer =
+      getController()?.cameraHasOnTimer && mode !== decl.CameraModes.Off
+        ? ` (${getController().cameraOnTimeMax}s available)`
+        : "";
+    $("#view-camera .reading-state").text(
+      `${mode} : ${value}${timer} [${captureCount} Captured]`,
+    );
   }
 
   function storeCapture(data, mode) {
     $("<img>", { src: data, alt: `${mode} capture` })
-      .attr({ "data-captured-at": new Date().toISOString(), "data-mode": String(mode) })
+      .attr({
+        "data-captured-at": new Date().toISOString(),
+        "data-mode": String(mode),
+      })
       .appendTo("#camera-captures");
   }
 
-  $("[data-camera-mode]").on("click", function () { selectMode($(this)).catch(handleError); });
-  $("#camera-capture").on("click", () => { try { capture(); } catch (error) { handleError(error); } });
-  $("#led-intensity").on("input", function () { $("#led-output").text($(this).val()); });
-  $("#led-intensity").on("change", function () { getController().setCameraLedIntensity(Number($(this).val())).catch(handleError); });
+  $("[data-camera-mode]").on("click", function () {
+    selectMode($(this)).catch(handleError);
+  });
+  $("#camera-capture").on("click", () => {
+    try {
+      capture();
+    } catch (error) {
+      handleError(error);
+    }
+  });
+  $("#led-intensity").on("input", function () {
+    $("#led-output").text($(this).val());
+  });
+  $("#led-intensity").on("change", function () {
+    getController()
+      .setCameraLedIntensity(Number($(this).val()))
+      .catch(handleError);
+  });
   $("#led-toggle").on("click", function () {
-    const target = Number($("#led-output").text()) > 0 ? 0 : Number(getController().cameraLedIntensityMax || 1);
+    const target =
+      Number($("#led-output").text()) > 0
+        ? 0
+        : Number(getController().cameraLedIntensityMax || 1);
     getController().setCameraLedIntensity(target).catch(handleError);
   });
-  $("#focus-intensity").on("input", function () { $("#focus-output").text($(this).val()); });
+  $("#focus-intensity").on("input", function () {
+    $("#focus-value-output").text($(this).val());
+  });
   $("#focus-intensity").on("change", async function () {
     try {
-      await getController().setCameraFocusMode(decl.FocusModes.Manual);
-      await getController().setCameraManualFocus(Number($(this).val()));
-    } catch (error) { handleError(error); }
+      const modeChanged = await getController().setCameraFocusMode(
+        decl.FocusModes.Manual,
+      );
+      const focusChanged = await getController().setCameraManualFocus(
+        Number($(this).val()),
+      );
+      if (!modeChanged || !focusChanged)
+        throw new Error(
+          "The active camera did not accept the manual focus setting.",
+        );
+      $("#focus-output").text(`Manual (${$(this).val()})`);
+    } catch (error) {
+      handleError(error);
+    }
   });
   $("#focus-mode").on("click", async function () {
     try {
-      manualFocus = !manualFocus;
-      await getController().setCameraFocusMode(manualFocus ? decl.FocusModes.Manual : decl.FocusModes.Auto);
-      configureFocusRange();
-    } catch (error) { handleError(error); }
+      const nextManualFocus = !manualFocus;
+      const changed = await getController().setCameraFocusMode(
+        nextManualFocus ? decl.FocusModes.Manual : decl.FocusModes.Auto,
+        !nextManualFocus,
+      );
+      if (!changed)
+        throw new Error(
+          `The active camera did not accept ${nextManualFocus ? "manual" : "automatic"} focus mode.`,
+        );
+      manualFocus = nextManualFocus;
+      $("#focus-intensity").prop("disabled", !manualFocus);
+      $("#focus-mode").text(manualFocus ? "Use Auto" : "Use Manual");
+      $("#focus-output").text(
+        manualFocus ? `Manual (${$("#focus-intensity").val()})` : "Auto",
+      );
+    } catch (error) {
+      handleError(error);
+    }
   });
-  $("[data-camera-command]").on("click", function () { runCommand($(this).data("cameraCommand")); });
+  $("[data-camera-command]").on("click", function () {
+    runCommand($(this).data("cameraCommand"));
+  });
   $(window).on("keydown", handleKeydown);
 
-  return { attachEvents, activate, stop, handleReading, handleReadingState, handleDeviceError };
+  return {
+    attachEvents,
+    activate,
+    stop,
+    handleReading,
+    handleReadingState,
+    handleDeviceError,
+  };
 }
