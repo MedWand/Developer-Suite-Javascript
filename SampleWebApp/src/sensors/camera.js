@@ -9,16 +9,7 @@ export function createCameraSensor(
   log,
 ) {
   let captureCount = 0;
-  let frameReady = false;
-  let capturePending = false;
   let manualFocus = false;
-
-  function attachEvents() {
-    const module = getController().camera;
-    if (typeof module?.on !== "function") return;
-    module.on("frameReady", handleFrame);
-    module.on("recordedFrameReady", handleRecordedFrame);
-  }
 
   function activate() {
     setStatus("Ready");
@@ -28,7 +19,6 @@ export function createCameraSensor(
     const modeName = $button.data("cameraMode");
     await stopActiveSensor();
 
-    frameReady = false;
     manualFocus = false;
     setStatus(modeName === "Off" ? "Ready" : "Starting");
     $("#camera-capture").prop("disabled", true);
@@ -56,7 +46,8 @@ export function createCameraSensor(
 
       if (started && modeName !== "Off") {
         configureControls();
-        await configureFocusControls();
+        configureFocusControls();
+        $("#camera-capture").prop("disabled", false);
         setStatus("On");
         return;
       }
@@ -76,8 +67,6 @@ export function createCameraSensor(
     );
     clearPreview();
     setActiveSensor(null);
-    frameReady = false;
-    capturePending = false;
     manualFocus = false;
     $("#camera-capture").prop("disabled", true).text("Capture");
     hideControls();
@@ -90,8 +79,6 @@ export function createCameraSensor(
       .catch(() => false);
     clearPreview();
     setActiveSensor(null);
-    frameReady = false;
-    capturePending = false;
     manualFocus = false;
     $("#camera-capture").prop("disabled", true).text("Capture");
     hideControls();
@@ -116,31 +103,15 @@ export function createCameraSensor(
     context.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  function handleFrame(bytes) {
-    if (!bytes?.length || getActiveSensor() !== "camera" || frameReady) return;
-    frameReady = true;
-    $("#camera-capture").prop("disabled", false);
-    setStatus("On");
-  }
-
   function capture() {
-    if (!getController()?.cameraIsMonitoring || !frameReady)
-      throw new Error("The camera preview has not produced a frame yet.");
-    $("#camera-capture").prop("disabled", true).text("Capturing...");
-    setStatus("Capturing");
-    capturePending = true;
-    getController().startRecording();
-  }
-
-  function handleRecordedFrame(bytes) {
-    if (!capturePending) return;
-    capturePending = false;
-    const data = getController().cameraBmpFromCapture(bytes);
-    if (data) storeCapture(data, getController().cameraMode);
+    if (!getController()?.cameraIsMonitoring)
+      throw new Error("The camera preview is not running.");
+    const canvas = $("#camera-preview")[0];
+    const data = canvas.toDataURL("image/png");
+    storeCapture(data, getController().cameraMode);
     captureCount += 1;
-    $("#camera-capture").prop("disabled", false).text("Capture");
     setStatus("On");
-    log(`Camera image captured (${bytes.length} bytes)`);
+    log("Camera image captured");
   }
 
   function configureControls() {
@@ -160,48 +131,15 @@ export function createCameraSensor(
       .text(intensity > 0 ? "Turn off" : "Turn on");
   }
 
-  async function configureFocusControls() {
-    const cameraModel = getController().camera?.cameraModel;
-    const focus = cameraModel?.focusInfo;
-    const $slider = $("#focus-intensity");
-
-    if (!focus?.hasManualFocus) {
-      $("#focus-controls").prop("hidden", true);
-      $slider.prop("disabled", true);
-      $("#focus-mode").prop("disabled", true);
-      return;
-    }
-
-    if (focus.hasAutoFocus) {
-      await getController().setCameraFocusMode(decl.FocusModes.Auto, true);
-      manualFocus = false;
-    }
-
-    const value = Number(
-      cameraModel.selectedFocusModeValue || focus.focusMinimum,
-    );
-    $("#focus-controls").prop("hidden", false);
-    $("#focus-mode")
-      .prop("hidden", !focus.hasManualFocus)
-      .prop("disabled", !focus.hasManualFocus)
-      .text("Use Manual");
-    $("#focus-value-control").prop("hidden", !focus.hasManualFocus);
-    $slider
-      .attr({ min: focus.focusMinimum, max: focus.focusMaximum, step: 1 })
-      .val(value)
-      .prop("disabled", true);
-    $("#focus-output").text(manualFocus ? `Manual (${value})` : "Auto");
-    $("#focus-value-output").text(value);
+  function configureFocusControls() {
+    // Focus capability/range details are intentionally not exposed by the
+    // controller's public API. Keep these optional controls unavailable.
+    $("#focus-controls").prop("hidden", true);
+    $("#focus-intensity, #focus-mode").prop("disabled", true);
   }
 
   function cameraStartupError(modeName) {
-    const controller = getController();
-    const detail = String(
-      controller?.cameraLastError ?? controller?.CameraLastError ?? "",
-    ).trim();
-    return detail
-      ? `${modeName} preview did not start. ${detail}`
-      : `${modeName} preview did not start. No additional camera error was reported.`;
+    return `${modeName} preview did not start.`;
   }
 
   function runCommand(command) {
@@ -339,7 +277,6 @@ export function createCameraSensor(
   $(window).on("keydown", handleKeydown);
 
   return {
-    attachEvents,
     activate,
     stop,
     handleReading,

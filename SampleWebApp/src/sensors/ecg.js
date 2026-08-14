@@ -10,12 +10,6 @@ export function createEcgSensor(
   let captureCount = 0;
   let recording = false;
 
-  function attachEvents() {
-    const module = getController().ecg;
-    if (typeof module?.on !== "function") return;
-    module.on("recordedStripReady", handleRecordedStrip);
-  }
-
   async function activate() {
     await stopActiveSensor();
     const started = await getController().startEcg($("#ecg-canvas")[0]);
@@ -52,24 +46,20 @@ export function createEcgSensor(
     }
 
     getController().stopRecording();
+    captureRenderedStrip();
     recording = false;
     setNavigationLocked(false);
     $recordButton.text("Start Recording").removeClass("stop");
     setStatus("Monitoring");
   }
 
-  function handleRecordedStrip(capture) {
-    const data =
-      typeof capture === "string"
-        ? capture
-        : getController().ecgBmpFromCapture(capture);
-    if (data) {
-      $("<img>", { src: data, alt: "Captured ECG strip" })
-        .attr("data-captured-at", new Date().toISOString())
-        .appendTo("#ecg-captures");
-    }
+  function captureRenderedStrip() {
+    const canvas = $("#ecg-canvas")[0];
+    const data = canvas.toDataURL("image/png");
+    $("<img>", { src: data, alt: "Captured ECG strip" })
+      .attr("data-captured-at", new Date().toISOString())
+      .appendTo("#ecg-captures");
     captureCount += 1;
-    setStatus("Monitoring");
     log("ECG strip captured");
   }
 
@@ -96,7 +86,6 @@ export function createEcgSensor(
   $recordButton.on("click", toggleRecording);
 
   return {
-    attachEvents,
     activate,
     stop,
     handleReading,

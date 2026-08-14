@@ -47,8 +47,6 @@ Open that exact URL in Chrome or Edge:
 
 Web Serial requires device selection to be triggered by a user action.
 
-Stop the local server with `Ctrl+C`.
-
 ## Use a Different Port
 
 In PowerShell:
