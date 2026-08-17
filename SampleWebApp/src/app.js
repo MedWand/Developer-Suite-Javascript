@@ -161,13 +161,13 @@ import { createCameraSensor } from "./sensors/camera.js";
       $button.prop(
         "disabled",
         feature === "ecg"
-          ? !medWandController.canUseEcg || !medWandController.hasValidEcg
+          ? !medWandController.CanUseEcg || !medWandController.HasValidEcg
           : feature === "camera"
-            ? !medWandController.canUseCamera ||
-              !medWandController.hasValidOtoscope
+            ? !medWandController.CanUseCamera ||
+              !medWandController.HasValidOtoscope
             : feature === "stethoscope"
-              ? !medWandController.canUseStethoscope ||
-                !medWandController.hasValidStethoscope
+              ? !medWandController.CanUseStethoscope ||
+                !medWandController.HasValidStethoscope
               : false,
       );
     });
@@ -236,7 +236,7 @@ import { createCameraSensor } from "./sensors/camera.js";
   // DECL events: subscribe once after controller construction and dispose on disconnect.
   function attachDeclControllerEvents() {
     medWandController.on("deviceStateChanged", (value) => {
-      setConnection(medWandController.isConnected, String(value));
+      setConnection(medWandController.IsConnected, String(value));
       log(`Device state: ${value}`);
     });
     medWandController.on("readingStateChanged", (value) => {
@@ -283,17 +283,17 @@ import { createCameraSensor } from "./sensors/camera.js";
       medWandController = new decl.MedWandController();
       attachDeclControllerEvents();
       // DECL: validate the supplied license.
-      medWandController.construct(license.trim(), publicKey.trim());
-      if (!medWandController.isLicenseValid)
+      medWandController.Construct(license.trim(), publicKey.trim());
+      if (!medWandController.IsLicenseValid)
         throw new Error("The DECL license is not valid.");
       setConnection(false, "Choose device");
       // Match the Functional Test App lifecycle: connect first, then create
       // sensor modules with Configure immediately before Initialize.
-      await medWandController.connect();
+      await medWandController.Connect();
       setConnection(true, "Initializing");
-      medWandController.configure($("#ecg-canvas")[0]);
-      await medWandController.initialize();
-      if (!medWandController.isInitialized)
+      medWandController.Configure($("#ecg-canvas")[0]);
+      await medWandController.Initialize();
+      if (!medWandController.IsInitialized)
         throw new Error("The MedWand did not initialize.");
       enableTools();
       await loadDeviceDetails();
@@ -304,12 +304,7 @@ import { createCameraSensor } from "./sensors/camera.js";
     } catch (error) {
       log(`Connection failed: ${errorText(error)}`);
       if (medWandController) {
-        try {
-          await medWandController.disconnect();
-        } catch (disconnectError) {
-          log(`Connection cleanup: ${errorText(disconnectError)}`);
-        }
-        medWandController.dispose();
+        medWandController.Dispose();
         medWandController = null;
       }
       activeSensor = null;
@@ -321,51 +316,43 @@ import { createCameraSensor } from "./sensors/camera.js";
   }
 
   async function loadDeviceDetails() {
-    // DECL: query device identity and firmware metadata after initialization.
-    const values = await Promise.allSettled([
-      medWandController.getDeviceId(),
-      medWandController.getGeneration(),
-      medWandController.getFirmwareVersion(),
-      medWandController.getUdi(),
-      medWandController.isBootloaderMode(false),
-    ]);
-    const value = (index) =>
-      values[index].status === "fulfilled"
-        ? String(values[index].value || "--")
-        : "Unavailable";
-    $("#device-id").text(value(0));
-    $("#generation").text(value(1));
-    $("#firmware").text(value(2));
-    $("#udi").text(value(3));
-    $("#bootloader-mode").text(value(4));
-    $("#port").text(medWandController.comPort || "WebSerial");
-    $("#vendor-id").text(medWandController.vendorId || "--");
-    $("#product-id").text(medWandController.productId || "--");
-    $("#is-connected").text(String(medWandController.isConnected));
-    $("#is-initialized").text(String(medWandController.isInitialized));
+    // DECL identity properties are populated during Connect().
+    const bootloaderMode = await medWandController.IsBootloaderMode(false).catch(
+      () => "Unavailable",
+    );
+    $("#device-id").text(medWandController.DeviceId || "--");
+    $("#generation").text(String(medWandController.Generation ?? "--"));
+    $("#firmware").text(medWandController.FirmwareVersion || "--");
+    $("#udi").text(medWandController.Udi || "--");
+    $("#bootloader-mode").text(String(bootloaderMode));
+    $("#port").text(medWandController.ComPort || "WebSerial");
+    $("#vendor-id").text(medWandController.VendorId || "--");
+    $("#product-id").text(medWandController.ProductId || "--");
+    $("#is-connected").text(String(medWandController.IsConnected));
+    $("#is-initialized").text(String(medWandController.IsInitialized));
     $("#camera-model").text(
-      medWandController.hasValidOtoscope
-        ? medWandController.cameraModel || "Available"
+      medWandController.HasValidOtoscope
+        ? medWandController.CameraModel || "Available"
         : "Unavailable",
     );
     $("#stethoscope-model").text(
-      medWandController.hasValidStethoscope
-        ? medWandController.stethoscopeModel
+      medWandController.HasValidStethoscope
+        ? medWandController.StethoscopeModel
         : "Unavailable",
     );
     $("#led-intensity")
-      .attr("max", Math.max(1, medWandController.cameraLedIntensityMax || 1))
-      .prop("disabled", !medWandController.cameraLedIntensityAdjustable);
+      .attr("max", Math.max(1, medWandController.CameraLedIntensityMax || 1))
+      .prop("disabled", true);
     updateGeneralStatus();
   }
 
   function updateGeneralStatus() {
-    if (!medWandController?.isConnected) {
+    if (!medWandController?.IsConnected) {
       $("#status-bar").text("MedWand Browser DECL Sample");
       return;
     }
     $("#status-bar").text(
-      `Device: ${medWandController.comPort || "WebSerial"}/${medWandController.vendorId || "--"}/${medWandController.productId || "--"} | ${medWandController.udi || "--"} | ${medWandController.generation || "--"} v${medWandController.firmwareVersion || "--"}`,
+      `Device: ${medWandController.ComPort || "WebSerial"}/${medWandController.VendorId || "--"}/${medWandController.ProductId || "--"} | ${medWandController.Udi || "--"} | ${medWandController.Generation ?? "--"} v${medWandController.FirmwareVersion || "--"}`,
     );
   }
 
@@ -374,11 +361,10 @@ import { createCameraSensor } from "./sensors/camera.js";
     if (!medWandController) return;
     try {
       await stopActiveSensor();
-      await medWandController.disconnect();
     } catch (error) {
       log(`Disconnect: ${errorText(error)}`);
     }
-    medWandController.dispose();
+    medWandController.Dispose();
     medWandController = null;
     navigationLocked = false;
     if (updateUi) {
@@ -418,7 +404,7 @@ import { createCameraSensor } from "./sensors/camera.js";
   $(navigationSelector).on("click", function () {
     showView($(this).data("view")).catch(handleActionError);
   });
-  $(window).on("beforeunload", () => medWandController?.dispose());
+  $(window).on("beforeunload", () => medWandController?.Dispose());
 
   function handleActionError(error) {
     log(`Action failed: ${errorText(error)}`);

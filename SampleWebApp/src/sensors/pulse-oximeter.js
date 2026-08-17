@@ -19,7 +19,7 @@ export function createPulseOximeterSensor(
     }
 
     await stopActiveSensor();
-    const started = await getController().startPulseOximeter();
+    const started = await getController().StartPulseOximeter();
     if (started) {
       setActiveSensor("spo2");
       $button.text("Stop").addClass("stop");
@@ -28,7 +28,7 @@ export function createPulseOximeterSensor(
 
   async function stop() {
     if (getActiveSensor() !== "spo2") return;
-    await getController().stopSensor();
+    await getController().StopSensor();
     setActiveSensor(null);
     $button.text("Start").removeClass("stop");
     setStatus("Ready");

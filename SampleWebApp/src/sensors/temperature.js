@@ -18,7 +18,7 @@ export function createTemperatureSensor(
     }
 
     await stopActiveSensor();
-    const started = await getController().startThermometer();
+    const started = await getController().StartThermometer();
     if (started) {
       setActiveSensor("temperature");
       $button.text("Stop").addClass("stop");
@@ -27,7 +27,7 @@ export function createTemperatureSensor(
 
   async function stop() {
     if (getActiveSensor() !== "temperature") return;
-    await getController().stopSensor();
+    await getController().StopSensor();
     setActiveSensor(null);
     $button.text("Start").removeClass("stop");
     setStatus("Ready");

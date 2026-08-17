@@ -27,7 +27,7 @@ export function createCameraSensor(
     try {
       const controller = getController();
       const preview = $("#camera-preview")[0];
-      started = await controller.setCameraMode(
+      started = await controller.SetCameraMode(
         preview,
         decl.CameraModes[modeName],
       );
@@ -61,7 +61,7 @@ export function createCameraSensor(
 
   async function stop() {
     if (getActiveSensor() !== "camera") return;
-    await getController().setCameraMode(
+    await getController().SetCameraMode(
       $("#camera-preview")[0],
       decl.CameraModes.Off,
     );
@@ -75,7 +75,7 @@ export function createCameraSensor(
 
   async function releaseCamera() {
     await getController()
-      .setCameraMode($("#camera-preview")[0], decl.CameraModes.Off)
+      .SetCameraMode($("#camera-preview")[0], decl.CameraModes.Off)
       .catch(() => false);
     clearPreview();
     setActiveSensor(null);
@@ -104,30 +104,29 @@ export function createCameraSensor(
   }
 
   function capture() {
-    if (!getController()?.cameraIsMonitoring)
+    if (!getController()?.CameraIsMonitoring)
       throw new Error("The camera preview is not running.");
     const canvas = $("#camera-preview")[0];
     const data = canvas.toDataURL("image/png");
-    storeCapture(data, getController().cameraMode);
+    storeCapture(data, getController().CameraMode);
     captureCount += 1;
     setStatus("On");
     log("Camera image captured");
   }
 
   function configureControls() {
-    const maximum = Math.max(0, getController().cameraLedIntensityMax || 0);
-    const intensity = Number(getController().ledIntensity || 0);
-    const adjustable = Boolean(getController().cameraLedIntensityAdjustable);
-    $("#led-controls").prop("hidden", maximum === 0);
+    const maximum = Math.max(0, getController().CameraLedIntensityMax || 0);
+    const intensity = Number(getController().LedIntensity || 0);
+    $("#led-controls").prop("hidden", true);
     $("#led-intensity")
-      .prop("hidden", !adjustable)
+      .prop("hidden", true)
       .attr("max", Math.max(1, maximum))
       .val(intensity)
-      .prop("disabled", !adjustable);
+      .prop("disabled", true);
     $("#led-output").text(intensity);
     $("#led-toggle")
-      .prop("hidden", adjustable)
-      .prop("disabled", maximum === 0)
+      .prop("hidden", true)
+      .prop("disabled", true)
       .text(intensity > 0 ? "Turn off" : "Turn on");
   }
 
@@ -143,15 +142,15 @@ export function createCameraSensor(
   }
 
   function runCommand(command) {
-    if (command === "zoom-in") getController().cameraZoom(1);
-    else if (command === "zoom-out") getController().cameraZoom(-1);
-    else if (command === "move-left") getController().cameraMove(-1, null);
-    else if (command === "move-right") getController().cameraMove(1, null);
-    else if (command === "move-up") getController().cameraMove(null, -1);
-    else if (command === "move-down") getController().cameraMove(null, 1);
-    else if (command === "radius-in") getController().cameraResizeMask(5);
-    else if (command === "radius-out") getController().cameraResizeMask(-5);
-    else getController().cameraReset();
+    if (command === "zoom-in") getController().CameraZoom(1);
+    else if (command === "zoom-out") getController().CameraZoom(-1);
+    else if (command === "move-left") getController().CameraMove(-1, null);
+    else if (command === "move-right") getController().CameraMove(1, null);
+    else if (command === "move-up") getController().CameraMove(null, -1);
+    else if (command === "move-down") getController().CameraMove(null, 1);
+    else if (command === "radius-in") getController().Camera?.resizeMask(5);
+    else if (command === "radius-out") getController().Camera?.resizeMask(-5);
+    else getController().CameraReset();
   }
 
   function handleKeydown(event) {
@@ -186,10 +185,10 @@ export function createCameraSensor(
   }
 
   function setStatus(value) {
-    const mode = getController()?.cameraMode || decl.CameraModes.Off;
+    const mode = getController()?.CameraMode || decl.CameraModes.Off;
     const timer =
-      getController()?.cameraHasOnTimer && mode !== decl.CameraModes.Off
-        ? ` (${getController().cameraOnTimeMax}s available)`
+      getController()?.CameraHasOnTimer && mode !== decl.CameraModes.Off
+        ? ` (${getController().CameraOnTimeMax}s available)`
         : "";
     $("#view-camera .reading-state").text(
       `${mode} : ${value}${timer} [${captureCount} Captured]`,
@@ -218,27 +217,16 @@ export function createCameraSensor(
   $("#led-intensity").on("input", function () {
     $("#led-output").text($(this).val());
   });
-  $("#led-intensity").on("change", function () {
-    getController()
-      .setCameraLedIntensity(Number($(this).val()))
-      .catch(handleError);
-  });
-  $("#led-toggle").on("click", function () {
-    const target =
-      Number($("#led-output").text()) > 0
-        ? 0
-        : Number(getController().cameraLedIntensityMax || 1);
-    getController().setCameraLedIntensity(target).catch(handleError);
-  });
   $("#focus-intensity").on("input", function () {
     $("#focus-value-output").text($(this).val());
   });
   $("#focus-intensity").on("change", async function () {
     try {
-      const modeChanged = await getController().setCameraFocusMode(
+      const camera = getController().Camera;
+      const modeChanged = await camera?.setFocusMode(
         decl.FocusModes.Manual,
       );
-      const focusChanged = await getController().setCameraManualFocus(
+      const focusChanged = await camera?.setManualFocus(
         Number($(this).val()),
       );
       if (!modeChanged || !focusChanged)
@@ -253,7 +241,7 @@ export function createCameraSensor(
   $("#focus-mode").on("click", async function () {
     try {
       const nextManualFocus = !manualFocus;
-      const changed = await getController().setCameraFocusMode(
+      const changed = await getController().Camera?.setFocusMode(
         nextManualFocus ? decl.FocusModes.Manual : decl.FocusModes.Auto,
         !nextManualFocus,
       );

@@ -19,7 +19,7 @@ export function createStethoscopeSensor(
   async function selectMode($button) {
     const modeName = $button.data("stethMode");
     await stopActiveSensor();
-    const started = await getController().setStethoscopeMode(
+    const started = await getController().SetStethoscopeMode(
       decl.MicrophoneModes[modeName],
     );
 
@@ -35,8 +35,8 @@ export function createStethoscopeSensor(
 
   async function stop() {
     if (getActiveSensor() !== "stethoscope") return;
-    if (recording) getController().stopRecording();
-    await getController().setStethoscopeMode(decl.MicrophoneModes.Off);
+    if (recording) getController().StopRecording();
+    await getController().SetStethoscopeMode(decl.MicrophoneModes.Off);
     setActiveSensor(null);
     recording = false;
     setNavigationLocked(false);
@@ -54,12 +54,12 @@ export function createStethoscopeSensor(
   function toggleRecording() {
     const $button = $("#steth-record");
     if (!recording) {
-      getController().startRecording();
+      getController().StartRecording();
       recording = true;
       setNavigationLocked(true);
       $button.text("Stop Recording").addClass("stop");
     } else {
-      getController().stopRecording();
+      getController().StopRecording();
       recording = false;
       setNavigationLocked(false);
       $button.text("Start Recording").removeClass("stop");
@@ -76,7 +76,7 @@ export function createStethoscopeSensor(
   }
 
   function setStatus(override) {
-    const mode = getController()?.stethoscopeMode || decl.MicrophoneModes.Off;
+    const mode = getController()?.StethoscopeMode || decl.MicrophoneModes.Off;
     const reading =
       override ||
       (mode === decl.MicrophoneModes.Off

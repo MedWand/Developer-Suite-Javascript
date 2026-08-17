@@ -12,7 +12,7 @@ export function createEcgSensor(
 
   async function activate() {
     await stopActiveSensor();
-    const started = await getController().startEcg($("#ecg-canvas")[0]);
+    const started = await getController().StartEcg($("#ecg-canvas")[0]);
     if (!started) {
       setStatus("Not Monitoring");
       return;
@@ -23,8 +23,8 @@ export function createEcgSensor(
   }
 
   async function stop() {
-    if (recording) getController().stopRecording();
-    await getController().stopSensor();
+    if (recording) getController().StopRecording();
+    await getController().StopSensor();
     setActiveSensor(null);
     recording = false;
     setNavigationLocked(false);
@@ -37,7 +37,7 @@ export function createEcgSensor(
 
   function toggleRecording() {
     if (!recording) {
-      getController().startRecording();
+      getController().StartRecording();
       recording = true;
       setNavigationLocked(true);
       $recordButton.text("Stop Recording").addClass("stop");
@@ -45,7 +45,7 @@ export function createEcgSensor(
       return;
     }
 
-    getController().stopRecording();
+    getController().StopRecording();
     captureRenderedStrip();
     recording = false;
     setNavigationLocked(false);
