@@ -1,8 +1,6 @@
 import { createTemperatureSensor } from "./sensors/temperature.js";
 import { createPulseOximeterSensor } from "./sensors/pulse-oximeter.js";
 import { createEcgSensor } from "./sensors/ecg.js";
-import { createStethoscopeSensor } from "./sensors/stethoscope.js";
-import { createCameraSensor } from "./sensors/camera.js";
 
 (() => {
   "use strict";
@@ -91,10 +89,6 @@ import { createCameraSensor } from "./sensors/camera.js";
   function setActiveSensor(name) {
     activeSensor = name;
   }
-  function getActiveView() {
-    return activeView;
-  }
-
   const temperatureSensor = createTemperatureSensor(
     decl,
     getController,
@@ -123,34 +117,10 @@ import { createCameraSensor } from "./sensors/camera.js";
     errorText,
     log,
   );
-  const stethoscopeSensor = createStethoscopeSensor(
-    decl,
-    getController,
-    getActiveSensor,
-    setActiveSensor,
-    stopActiveSensor,
-    setNavigationLocked,
-    errorText,
-    log,
-    handleActionError,
-  );
-  const cameraSensor = createCameraSensor(
-    decl,
-    getController,
-    getActiveView,
-    getActiveSensor,
-    setActiveSensor,
-    stopActiveSensor,
-    errorText,
-    log,
-  );
-
   function sensorFor(name) {
     if (name === "temperature") return temperatureSensor;
     if (name === "spo2") return pulseOximeterSensor;
     if (name === "ecg") return ecgSensor;
-    if (name === "stethoscope") return stethoscopeSensor;
-    if (name === "camera") return cameraSensor;
     return null;
   }
 
@@ -162,13 +132,7 @@ import { createCameraSensor } from "./sensors/camera.js";
         "disabled",
         feature === "ecg"
           ? !medWandController.CanUseEcg || !medWandController.HasValidEcg
-          : feature === "camera"
-            ? !medWandController.CanUseCamera ||
-              !medWandController.HasValidOtoscope
-            : feature === "stethoscope"
-              ? !medWandController.CanUseStethoscope ||
-                !medWandController.HasValidStethoscope
-              : false,
+          : false,
       );
     });
   }
@@ -184,7 +148,7 @@ import { createCameraSensor } from "./sensors/camera.js";
       log("Navigation locked while recording");
       return;
     }
-    if (medWandController?.isInitialized) enableTools();
+    if (medWandController?.IsInitialized) enableTools();
     $("#home-button, .nav-item[data-view='summary']").prop("disabled", false);
     log("Navigation unlocked");
   }
@@ -216,12 +180,6 @@ import { createCameraSensor } from "./sensors/camera.js";
       pulseValues.pulse === "--" ? "--" : `${pulseValues.pulse} bpm`,
     );
     copyCaptures("#ecg-captures", "#summary-ecg", "No ECG strips captured.");
-    copyCaptures(
-      "#stethoscope-captures",
-      "#summary-stethoscope",
-      "No audio recordings captured.",
-    );
-    copyCaptures("#camera-captures", "#summary-camera", "No images captured.");
   }
 
   function copyCaptures(source, target, emptyMessage) {
@@ -256,11 +214,6 @@ import { createCameraSensor } from "./sensors/camera.js";
       if (sensor) sensor.handleDeviceError(error);
     });
     medWandController.on("licenseError", (value) => log(`License: ${value}`));
-    medWandController.on("ledIntensityChanged", (value) => {
-      $("#led-output").text(value);
-      $("#led-intensity").val(value);
-      $("#led-toggle").text(Number(value) > 0 ? "Turn off" : "Turn on");
-    });
   }
 
   function formatReading(value) {
@@ -317,32 +270,22 @@ import { createCameraSensor } from "./sensors/camera.js";
 
   async function loadDeviceDetails() {
     // DECL identity properties are populated during Connect().
-    const bootloaderMode = await medWandController.IsBootloaderMode(false).catch(
-      () => "Unavailable",
-    );
+    let bootloaderMode = false;
+    try {
+      bootloaderMode = await medWandController.IsBootloaderMode(false);
+    } catch {
+      // The beta sample presents an unanswered bootloader query as False.
+    }
     $("#device-id").text(medWandController.DeviceId || "--");
     $("#generation").text(String(medWandController.Generation ?? "--"));
     $("#firmware").text(medWandController.FirmwareVersion || "--");
     $("#udi").text(medWandController.Udi || "--");
-    $("#bootloader-mode").text(String(bootloaderMode));
+    $("#bootloader-mode").text(bootloaderMode ? "True" : "False");
     $("#port").text(medWandController.ComPort || "WebSerial");
     $("#vendor-id").text(medWandController.VendorId || "--");
     $("#product-id").text(medWandController.ProductId || "--");
     $("#is-connected").text(String(medWandController.IsConnected));
     $("#is-initialized").text(String(medWandController.IsInitialized));
-    $("#camera-model").text(
-      medWandController.HasValidOtoscope
-        ? medWandController.CameraModel || "Available"
-        : "Unavailable",
-    );
-    $("#stethoscope-model").text(
-      medWandController.HasValidStethoscope
-        ? medWandController.StethoscopeModel
-        : "Unavailable",
-    );
-    $("#led-intensity")
-      .attr("max", Math.max(1, medWandController.CameraLedIntensityMax || 1))
-      .prop("disabled", true);
     updateGeneralStatus();
   }
 
