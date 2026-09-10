@@ -9,6 +9,26 @@ export function createEcgSensor(
   const $recordButton = $("#ecg-record");
   let captureCount = 0;
   let recording = false;
+  let removeRecordedStripListener = null;
+  let recordedStripSource = null;
+
+  function attachRecordedStripListener() {
+    const ecg = getController()?.Ecg;
+    if (!ecg) return;
+    if (recordedStripSource === ecg && removeRecordedStripListener) return;
+    detachRecordedStripListener();
+    recordedStripSource = ecg;
+    removeRecordedStripListener = ecg.on(
+      "RecordedStripReady",
+      storeRecordedStrip,
+    );
+  }
+
+  function detachRecordedStripListener() {
+    removeRecordedStripListener?.();
+    removeRecordedStripListener = null;
+    recordedStripSource = null;
+  }
 
   async function activate() {
     await stopActiveSensor();
@@ -18,6 +38,7 @@ export function createEcgSensor(
       return;
     }
     setActiveSensor("ecg");
+    attachRecordedStripListener();
     $recordButton.prop("disabled", false);
     setStatus("Monitoring");
   }
@@ -25,6 +46,7 @@ export function createEcgSensor(
   async function stop() {
     if (recording) getController().StopRecording();
     await getController().StopSensor();
+    detachRecordedStripListener();
     setActiveSensor(null);
     recording = false;
     setNavigationLocked(false);
@@ -46,16 +68,16 @@ export function createEcgSensor(
     }
 
     getController().StopRecording();
-    captureRenderedStrip();
     recording = false;
     setNavigationLocked(false);
     $recordButton.text("Start Recording").removeClass("stop");
     setStatus("Monitoring");
   }
 
-  function captureRenderedStrip() {
-    const canvas = $("#ecg-canvas")[0];
-    const data = canvas.toDataURL("image/png");
+  function storeRecordedStrip(bytes) {
+    if (!bytes?.length) return;
+    const data = getController().EcgBmpFromCapture(bytes);
+    if (!data) return;
     $("<img>", { src: data, alt: "Captured ECG strip" })
       .attr("data-captured-at", new Date().toISOString())
       .appendTo("#ecg-captures");
@@ -70,6 +92,7 @@ export function createEcgSensor(
   }
 
   function handleDeviceError(error) {
+    detachRecordedStripListener();
     recording = false;
     setNavigationLocked(false);
     $recordButton
