@@ -430,3 +430,6 @@ FodyWeavers.xsd
 
 # Local agent configuration
 .agents/
+
+# Local browser sample license values
+/SampleApp/wwwroot/license.local.txt
