@@ -35,15 +35,25 @@ SampleApp/
 
 ## Configure the DECL License
 
-Open `SampleApp/wwwroot/src/app.js` and set these constants to the values
-supplied for your integration:
+Copy `SampleApp/wwwroot/license.example.txt` to
+`SampleApp/wwwroot/license.local.txt` and fill in the supplied values.
+The text file uses JSON format:
 
-```js
-const MW_DECL_LICENSE = "YOUR_LICENSE";
-const MW_DECL_PUBLIC_KEY = "YOUR_PUBLIC_KEY";
+```json
+{
+  "license": "YOUR_LICENSE",
+  "publicKey": "YOUR_PUBLIC_KEY"
+}
 ```
 
-Do not commit development or production license values to a public repository.
+The local file is ignored by Git; the example contains no license values.
+The app loads it when you select Continue, before enabling Start.
+After changing the file, reload the page. Missing or invalid configuration
+shows setup instructions in the connection dialog.
+
+These values are still downloaded by the browser. Ignoring the file prevents
+accidental Git inclusion; it does not make browser license values secret or
+remove any values already committed to Git history.
 
 ## Run in Visual Studio
 

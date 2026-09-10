@@ -1,15 +1,14 @@
 import { createTemperatureSensor } from "./sensors/temperature.js";
 import { createPulseOximeterSensor } from "./sensors/pulse-oximeter.js";
 import { createEcgSensor } from "./sensors/ecg.js";
+import { createStethoscopeSensor } from "./sensors/stethoscope.js";
 
 (() => {
   "use strict";
 
-  // DECL configuration: add the license values supplied for your MedWand integration here.
-  const MW_DECL_LICENSE =
-    "";
-  const MW_DECL_PUBLIC_KEY =
-    "";
+  // Load configuration before Start to preserve the Web Serial user action.
+  let localLicense = null;
+
 
   // DECL bundle entry point. All MedWand device operations below flow through this object.
   const decl = globalThis.MedWandSdk;
@@ -37,9 +36,9 @@ import { createEcgSensor } from "./sensors/ecg.js";
   }
 
   function errorText(error) {
-    const message = error?.exception?.message || error?.message;
-    const code = error?.errorCode || error?.code || error?.name;
-    const constraint = error?.exception?.constraint || error?.constraint;
+    const message = error?.Exception?.message || error?.message;
+    const code = error?.Code || error?.name;
+    const constraint = error?.Exception?.constraint || error?.constraint;
     let detail = message ? String(message) : code ? String(code) : "";
     if (message && code && !detail.includes(String(code)))
       detail = `${detail} (${code})`;
@@ -89,6 +88,7 @@ import { createEcgSensor } from "./sensors/ecg.js";
   function setActiveSensor(name) {
     activeSensor = name;
   }
+
   const temperatureSensor = createTemperatureSensor(
     decl,
     getController,
@@ -117,10 +117,23 @@ import { createEcgSensor } from "./sensors/ecg.js";
     errorText,
     log,
   );
+  const stethoscopeSensor = createStethoscopeSensor(
+    decl,
+    getController,
+    getActiveSensor,
+    setActiveSensor,
+    stopActiveSensor,
+    setNavigationLocked,
+    errorText,
+    log,
+    handleActionError,
+  );
+
   function sensorFor(name) {
     if (name === "temperature") return temperatureSensor;
     if (name === "spo2") return pulseOximeterSensor;
     if (name === "ecg") return ecgSensor;
+    if (name === "stethoscope") return stethoscopeSensor;
     return null;
   }
 
@@ -132,7 +145,10 @@ import { createEcgSensor } from "./sensors/ecg.js";
         "disabled",
         feature === "ecg"
           ? !medWandController.CanUseEcg || !medWandController.HasValidEcg
-          : false,
+          : feature === "stethoscope"
+            ? !medWandController.CanUseStethoscope ||
+              !medWandController.HasValidStethoscope
+            : false,
       );
     });
   }
@@ -180,6 +196,11 @@ import { createEcgSensor } from "./sensors/ecg.js";
       pulseValues.pulse === "--" ? "--" : `${pulseValues.pulse} bpm`,
     );
     copyCaptures("#ecg-captures", "#summary-ecg", "No ECG strips captured.");
+    copyCaptures(
+      "#stethoscope-captures",
+      "#summary-stethoscope",
+      "No audio recordings captured.",
+    );
   }
 
   function copyCaptures(source, target, emptyMessage) {
@@ -193,27 +214,27 @@ import { createEcgSensor } from "./sensors/ecg.js";
 
   // DECL events: subscribe once after controller construction and dispose on disconnect.
   function attachDeclControllerEvents() {
-    medWandController.on("deviceStateChanged", (value) => {
+    medWandController.on("OnDeviceStateChanged", (value) => {
       setConnection(medWandController.IsConnected, String(value));
       log(`Device state: ${value}`);
     });
-    medWandController.on("readingStateChanged", (value) => {
+    medWandController.on("OnReadingStateChanged", (value) => {
       const sensor = sensorFor(activeView);
       if (sensor) sensor.handleReadingState(value);
       log(`Reading state: ${value}`);
     });
-    medWandController.on("readingReceived", (reading) => {
+    medWandController.on("OnReadingReceived", (reading) => {
       const sensor = sensorFor(activeView);
       if (sensor) sensor.handleReading(reading);
     });
-    medWandController.on("deviceError", (error) => {
+    medWandController.on("OnDeviceError", (error) => {
       setNavigationLocked(false);
       const detail = errorText(error);
       log(`Device error: ${detail}`);
       const sensor = sensorFor(activeView);
       if (sensor) sensor.handleDeviceError(error);
     });
-    medWandController.on("licenseError", (value) => log(`License: ${value}`));
+    medWandController.on("OnLicenseError", (value) => log(`License: ${value}`));
   }
 
   function formatReading(value) {
@@ -225,7 +246,7 @@ import { createEcgSensor } from "./sensors/ecg.js";
     const $button = $("#connect-button");
     if (!license.trim() || !publicKey.trim()) {
       const message =
-        "Add MW_DECL_LICENSE and MW_DECL_PUBLIC_KEY at the top of app.js before connecting.";
+        "Configure license.local.txt before connecting.";
       log(message);
       setConnection(false, "License not configured");
       return;
@@ -270,12 +291,12 @@ import { createEcgSensor } from "./sensors/ecg.js";
 
   async function loadDeviceDetails() {
     // DECL identity properties are populated during Connect().
-    let bootloaderMode = false;
-    try {
-      bootloaderMode = await medWandController.IsBootloaderMode(false);
-    } catch {
-      // The beta sample presents an unanswered bootloader query as False.
-    }
+      let bootloaderMode = false;
+      try {
+          bootloaderMode = await medWandController.IsBootloaderMode(false);
+      } catch {
+          // The beta sample presents an unanswered bootloader query as False.
+      }
     $("#device-id").text(medWandController.DeviceId || "--");
     $("#generation").text(String(medWandController.Generation ?? "--"));
     $("#firmware").text(medWandController.FirmwareVersion || "--");
@@ -286,6 +307,11 @@ import { createEcgSensor } from "./sensors/ecg.js";
     $("#product-id").text(medWandController.ProductId || "--");
     $("#is-connected").text(String(medWandController.IsConnected));
     $("#is-initialized").text(String(medWandController.IsInitialized));
+    $("#stethoscope-model").text(
+      medWandController.HasValidStethoscope
+        ? medWandController.StethoscopeModel
+        : "Unavailable",
+    );
     updateGeneralStatus();
   }
 
@@ -334,15 +360,35 @@ import { createEcgSensor } from "./sensors/ecg.js";
   }
 
   $("#connect-button").on("click", () =>
-    connectDecl(MW_DECL_LICENSE, MW_DECL_PUBLIC_KEY),
+    localLicense && connectDecl(localLicense.license, localLicense.publicKey),
   );
   $("#disconnect-button").on("click", () => {
     if (globalThis.confirm("Are you sure you want to disconnect?"))
       disconnectDecl();
   });
-  $("#continue-button").on("click", () => {
+  $("#continue-button").on("click", async () => {
     $("#startup-notice").prop("hidden", true);
+    const $button = $("#connect-button");
+    $button.prop("disabled", true).text("Loading license...");
     showConnectionModal();
+    try {
+      const response = await fetch("license.local.txt", { cache: "no-store" });
+      if (!response.ok) throw new Error("License configuration unavailable.");
+      const config = await response.json();
+      if (
+        typeof config?.license !== "string" || !config.license.trim() ||
+        typeof config?.publicKey !== "string" || !config.publicKey.trim()
+      ) throw new Error("License configuration incomplete.");
+      localLicense = config;
+      $button.prop("disabled", false).text("Start");
+    } catch {
+      // Avoid exposing configuration contents or JSON parsing errors.
+      const message = "Create license.local.txt from license.example.txt, fill in your license and public key, then reload this page.";
+      $("#connection-modal-description").text(message);
+      $("#license-state").text("Not configured");
+      $button.text("License not configured");
+      log(message);
+    }
   });
   $(navigationSelector).on("click", function () {
     showView($(this).data("view")).catch(handleActionError);

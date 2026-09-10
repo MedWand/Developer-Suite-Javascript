@@ -40,8 +40,8 @@ export function createTemperatureSensor(
   }
 
   function handleReading(reading) {
-    if (reading.sensorType !== decl.MedWandSensor.Thermometer) return;
-    latestValue = formatReading(reading.tempObject);
+    if (reading.SensorType !== decl.MedWandSensor.Thermometer) return;
+    latestValue = formatReading(reading.TempObject);
     $("#temperature-value").text(latestValue);
   }
 

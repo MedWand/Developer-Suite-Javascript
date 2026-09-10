@@ -41,9 +41,9 @@ export function createPulseOximeterSensor(
   }
 
   function handleReading(reading) {
-    if (reading.sensorType !== decl.MedWandSensor.PulseOximeter) return;
-    latestSpo2 = formatReading(reading.spo2);
-    latestPulse = formatReading(reading.pulseRate);
+    if (reading.SensorType !== decl.MedWandSensor.PulseOximeter) return;
+    latestSpo2 = formatReading(reading.Spo2);
+    latestPulse = formatReading(reading.PulseRate);
     $("#spo2-value").text(latestSpo2);
     $("#pulse-value").text(latestPulse);
   }
