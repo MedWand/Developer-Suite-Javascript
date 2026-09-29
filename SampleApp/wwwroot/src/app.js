@@ -2,6 +2,7 @@ import { createTemperatureSensor } from "./sensors/temperature.js";
 import { createPulseOximeterSensor } from "./sensors/pulse-oximeter.js";
 import { createEcgSensor } from "./sensors/ecg.js";
 import { createStethoscopeSensor } from "./sensors/stethoscope.js";
+import { createCameraSensor } from "./sensors/camera.js?v=20260928.2";
 
 (() => {
   "use strict";
@@ -88,6 +89,9 @@ import { createStethoscopeSensor } from "./sensors/stethoscope.js";
   function setActiveSensor(name) {
     activeSensor = name;
   }
+  function getActiveView() {
+    return activeView;
+  }
 
   const temperatureSensor = createTemperatureSensor(
     decl,
@@ -98,6 +102,7 @@ import { createStethoscopeSensor } from "./sensors/stethoscope.js";
     formatReading,
     errorText,
     handleActionError,
+    setNavigationLocked,
   );
   const pulseOximeterSensor = createPulseOximeterSensor(
     decl,
@@ -108,6 +113,7 @@ import { createStethoscopeSensor } from "./sensors/stethoscope.js";
     formatReading,
     errorText,
     handleActionError,
+    setNavigationLocked,
   );
   const ecgSensor = createEcgSensor(
     getController,
@@ -128,12 +134,24 @@ import { createStethoscopeSensor } from "./sensors/stethoscope.js";
     log,
     handleActionError,
   );
+  const cameraSensor = createCameraSensor(
+    decl,
+    getController,
+    getActiveView,
+    getActiveSensor,
+    setActiveSensor,
+    stopActiveSensor,
+    errorText,
+    log,
+    setNavigationLocked,
+  );
 
   function sensorFor(name) {
     if (name === "temperature") return temperatureSensor;
     if (name === "spo2") return pulseOximeterSensor;
     if (name === "ecg") return ecgSensor;
     if (name === "stethoscope") return stethoscopeSensor;
+    if (name === "camera") return cameraSensor;
     return null;
   }
 
@@ -145,10 +163,13 @@ import { createStethoscopeSensor } from "./sensors/stethoscope.js";
         "disabled",
         feature === "ecg"
           ? !medWandController.CanUseEcg || !medWandController.HasValidEcg
-          : feature === "stethoscope"
-            ? !medWandController.CanUseStethoscope ||
-              !medWandController.HasValidStethoscope
-            : false,
+          : feature === "camera"
+            ? !medWandController.CanUseCamera ||
+              !medWandController.HasValidOtoscope
+            : feature === "stethoscope"
+              ? !medWandController.CanUseStethoscope ||
+                !medWandController.HasValidStethoscope
+              : false,
       );
     });
   }
@@ -170,7 +191,7 @@ import { createStethoscopeSensor } from "./sensors/stethoscope.js";
   }
 
   async function showView(name) {
-    if (name === activeView) return;
+    if (navigationLocked || name === activeView) return;
     await stopActiveSensor();
     activeView = name;
     $(".view").removeClass("active").filter(`#view-${name}`).addClass("active");
@@ -201,6 +222,7 @@ import { createStethoscopeSensor } from "./sensors/stethoscope.js";
       "#summary-stethoscope",
       "No audio recordings captured.",
     );
+    copyCaptures("#camera-captures", "#summary-camera", "No images captured.");
   }
 
   function copyCaptures(source, target, emptyMessage) {
@@ -228,7 +250,8 @@ import { createStethoscopeSensor } from "./sensors/stethoscope.js";
       if (sensor) sensor.handleReading(reading);
     });
     medWandController.on("OnDeviceError", (error) => {
-      setNavigationLocked(false);
+      // These sensors own their transition lock until the in-flight call settles.
+      if (activeView !== "temperature" && activeView !== "spo2") setNavigationLocked(false);
       const detail = errorText(error);
       log(`Device error: ${detail}`);
       const sensor = sensorFor(activeView);
@@ -307,6 +330,11 @@ import { createStethoscopeSensor } from "./sensors/stethoscope.js";
     $("#product-id").text(medWandController.ProductId || "--");
     $("#is-connected").text(String(medWandController.IsConnected));
     $("#is-initialized").text(String(medWandController.IsInitialized));
+    $("#camera-model").text(
+      medWandController.HasValidOtoscope
+        ? medWandController.CameraModel || "Available"
+        : "Unavailable",
+    );
     $("#stethoscope-model").text(
       medWandController.HasValidStethoscope
         ? medWandController.StethoscopeModel

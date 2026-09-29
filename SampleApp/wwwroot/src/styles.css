@@ -527,22 +527,21 @@ button:disabled {
 }
 
 .camera-layout {
+  grid-template-rows: minmax(0, 1fr);
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 150px minmax(0, 1fr) 118px;
+  grid-template-columns: 180px minmax(0, 1fr) 118px;
   background: #000;
 }
 
 .camera-settings {
   grid-column: 1;
-  grid-row: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 8px;
   background: #f8f9fa;
   color: #000;
-  text-align: center;
 }
 
 .camera-settings h2,
@@ -555,15 +554,20 @@ button:disabled {
   display: none;
 }
 
-.camera-settings label {
-  display: block;
-  font-size: 0.75rem;
-}
-
 .camera-control-group {
   display: grid;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.camera-control-group > span,
+.camera-control-group > label {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.camera-control-group input[type="range"] {
+  width: 100%;
 }
 
 .camera-preview-stage {
@@ -580,11 +584,14 @@ button:disabled {
 }
 
 .camera-preview-stage canvas {
+  /* Match WPF Image's uniform fit: scale both axes together, including upscale. */
+  position: absolute;
+  inset: 0;
   display: block;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
 }
 
 .camera-preview-stage span {
@@ -628,21 +635,15 @@ button:disabled {
   object-fit: contain;
 }
 
-.otoscope-controls {
-  display: grid;
-  justify-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
-}
-
 .otoscope-controls > div,
-.otoscope-controls > div > span {
+.direction-pad > div {
   display: flex;
+  justify-content: center;
   gap: 4px;
 }
 
 .otoscope-controls .btn {
-  min-width: 34px;
+  min-width: 48px;
 }
 
 .direction-pad {
@@ -766,7 +767,7 @@ button:disabled {
   }
 
   .camera-layout {
-    grid-template-columns: 140px minmax(260px, 1fr) 100px;
+    grid-template-columns: 160px minmax(260px, 1fr) 100px;
     overflow-x: auto;
   }
 
@@ -791,3 +792,6 @@ button:disabled {
     font-size: 1rem;
   }
 }
+/* Preserve preview and capture proportions. */
+
+#camera-captures img { object-fit: contain; height: auto; max-width: 100%; }

@@ -10,7 +10,7 @@
       integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
       crossorigin="anonymous"
     />
-    <link rel="stylesheet" href="src/styles.css" />
+    <link rel="stylesheet" href="src/styles.css?v=20260924.1" />
   </head>
   <body class="bg-secondary">
     <div
@@ -114,7 +114,6 @@
           data-view="camera"
           data-feature="camera"
           title="Camera"
-          hidden
           disabled
         >
           <img src="assets/images/Buttons/camera-hover.png" alt="Camera" />
@@ -166,7 +165,7 @@
               </div>
               <div>
                 <dt>Version:</dt>
-                <dd>0.0.0.2</dd>
+                <dd>0.0.0.3</dd>
               </div>
               <div>
                 <dt>Build:</dt>
@@ -393,6 +392,90 @@
             Start Recording
           </button>
         </section>
+        <section id="view-camera" class="view sensor-view wide-view">
+          <div class="view-heading bg-primary text-white px-3">
+            <h1>Camera</h1>
+          </div>
+          <div class="camera-layout">
+            <aside class="camera-settings" aria-label="Camera controls">
+              <h2>Controls</h2>
+              <div id="camera-light-controls" class="camera-control-group" hidden>
+                <label for="camera-light">LED Intensity</label>
+                <input id="camera-light" type="range" min="0" max="1" value="0" />
+              </div>
+              <div id="camera-focus-controls" class="camera-control-group" hidden>
+                <span>Focus</span>
+                <button id="camera-focus-auto" class="btn btn-light btn-sm" type="button">Auto</button>
+                <button id="camera-focus-manual" class="btn btn-light btn-sm" type="button">Manual</button>
+                <label id="camera-focus-value-label" for="camera-focus-value" hidden>Focus value</label>
+                <input id="camera-focus-value" type="range" hidden />
+              </div>
+              <div id="camera-otoscope-controls" class="camera-control-group otoscope-controls" hidden>
+                <span>Move</span>
+                <div class="direction-pad">
+                  <button class="btn btn-light btn-sm" type="button" data-camera-command="move-up" aria-label="Move up" title="Move up">↑</button>
+                  <div>
+                    <button class="btn btn-light btn-sm" type="button" data-camera-command="move-left" aria-label="Move left" title="Move left">←</button>
+                    <button class="btn btn-light btn-sm" type="button" data-camera-command="move-right" aria-label="Move right" title="Move right">→</button>
+                  </div>
+                  <button class="btn btn-light btn-sm" type="button" data-camera-command="move-down" aria-label="Move down" title="Move down">↓</button>
+                </div>
+                <label>Zoom</label>
+                <div>
+                  <button class="btn btn-light btn-sm" type="button" data-camera-command="zoom-out">−</button>
+                  <button class="btn btn-light btn-sm" type="button" data-camera-command="zoom-in">+</button>
+                </div>
+                <label>Radius</label>
+                <div>
+                  <button class="btn btn-light btn-sm" type="button" data-camera-command="radius-decrease">−</button>
+                  <button class="btn btn-light btn-sm" type="button" data-camera-command="radius-increase">+</button>
+                </div>
+                <button class="btn btn-light btn-sm" type="button" data-camera-command="reset">Reset</button>
+              </div>
+            </aside>
+            <div class="camera-preview-stage">
+              <canvas id="camera-preview" width="1280" height="720"></canvas
+              ><span id="camera-empty">Select Dermatoscope or Otoscope</span>
+            </div>
+            <div class="mode-panel">
+              <h2>Modes</h2>
+              <div
+                class="mode-control vertical"
+                role="group"
+                aria-label="Camera mode"
+              >
+                <button data-camera-mode="Off" class="btn btn-light active">
+                  <img
+                    src="assets/images/Buttons/Otoscope/None-hover.png"
+                    alt=""
+                  />Off</button
+                ><button data-camera-mode="Dermatoscope" class="btn btn-light">
+                  <img
+                    src="assets/images/Buttons/Otoscope/Dermatoscope-hover.png"
+                    alt=""
+                  />Dermatoscope</button
+                ><button data-camera-mode="Otoscope" class="btn btn-light">
+                  <img
+                    src="assets/images/Buttons/Otoscope/Otoscope-hover.png"
+                    alt=""
+                  />Otoscope
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="sensor-status bg-white">
+            <span class="reading-state">Ready</span>
+          </div>
+          <button
+            id="camera-capture"
+            class="action-button btn btn-success rounded-0"
+            disabled
+          >
+            Capture
+          </button>
+          <p class="camera-hotkeys">Otoscope: Arrow keys move · + / - zoom · Page Up / Page Down change mask radius · Delete resets</p>
+          <div id="camera-captures" hidden aria-hidden="true"></div>
+        </section>
       </main>
     </div>
     <div id="status-bar" class="status-bar">MedWand Browser DECL Sample</div>
@@ -403,7 +486,7 @@
       integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
       crossorigin="anonymous"
     ></script>
-    <script src="/assets/js/MWSDK.Javascript.js?v=0.0.0.1&amp;build=55c9745c5e1c"></script>
-    <script type="module" src="src/app.js"></script>
+    <script src="/assets/js/MWSDK.Javascript.js?v=0.0.0.1&amp;build=af523fa00b88"></script>
+    <script type="module" src="src/app.js?v=20260928.2"></script>
   </body>
 </html>
