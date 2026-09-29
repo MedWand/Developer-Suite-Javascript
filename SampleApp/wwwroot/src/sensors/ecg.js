@@ -32,7 +32,7 @@ export function createEcgSensor(
 
   async function activate() {
     await stopActiveSensor();
-    const started = await getController().StartEcg($("#ecg-canvas")[0]);
+    const started = await getController().StartEcg();
     if (!started) {
       setStatus("Not Monitoring");
       return;

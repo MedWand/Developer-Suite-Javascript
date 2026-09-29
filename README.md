@@ -1,97 +1,64 @@
 # MedWand DECL JavaScript Sample
 
-This repository contains a Visual Studio web application demonstrating how to
-use the MedWand Device Encapsulation and Communication Library (DECL) from
-browser JavaScript.
+Browser sample for the MedWand Device Encapsulation and Communication Library
+(DECL), demonstrating temperature, pulse oximetry, ECG, stethoscope, and camera
+workflows. An ASP.NET Core (.NET 10) application serves the sample and bundled
+SDK; no npm install or JavaScript build step is required.
 
-The ASP.NET Core project serves the browser application as static content. The
-sample does not require an npm install or JavaScript build step.
+## Requirements
 
-## Prerequisites
-
-- Visual Studio with the **ASP.NET and web development** workload
-- The .NET 10 SDK
+- Visual Studio with the **ASP.NET and web development** workload and .NET 10 SDK
 - Google Chrome or Microsoft Edge with Web Serial support
-- Internet access to load Bootstrap from its CDN
-- A MedWand device
-- A valid DECL license and public key
+- A MedWand device and supplied DECL license and public key
+- Internet access for Bootstrap assets loaded from a CDN
 
-## Open the Solution
+## Setup and run
 
-Open `Developer-Suite-Javascript.slnx` in Visual Studio. The solution contains
-the `SampleApp` ASP.NET Core project.
+1. Open `Developer-Suite-Javascript.slnx` in Visual Studio.
+2. Copy `SampleApp/wwwroot/license.example.txt` to
+   `SampleApp/wwwroot/license.local.txt` and fill in the JSON values:
 
-The browser application is located under `SampleApp/wwwroot`:
+   ```json
+   {
+     "license": "YOUR_LICENSE",
+     "publicKey": "YOUR_PUBLIC_KEY"
+   }
+   ```
 
-```text
-SampleApp/
-  Program.cs
-  SampleApp.csproj
-  wwwroot/
-    index.html
-    assets/
-    src/
-```
+3. Set `SampleApp` as the startup project and select the **https** launch profile.
+4. Run with **F5** or **Ctrl+F5**, then open [https://localhost:7242](https://localhost:7242)
+   in Chrome or Edge. Trust the development HTTPS certificate if prompted.
+5. Select **Continue**, connect the MedWand, and select **Start**. Choose the
+   MedWand serial device if prompted and allow camera or microphone access when needed.
 
-## Configure the DECL License
+The license file is ignored by Git but is downloaded by the browser. Reload the
+page after changing it. Launch addresses are configured in
+`SampleApp/Properties/launchSettings.json`.
 
-Copy `SampleApp/wwwroot/license.example.txt` to
-`SampleApp/wwwroot/license.local.txt` and fill in the supplied values.
-The text file uses JSON format:
+## Camera
 
-```json
-{
-  "license": "YOUR_LICENSE",
-  "publicKey": "YOUR_PUBLIC_KEY"
-}
-```
+Select **Dermatoscope** or **Otoscope** to start preview, then **Capture** to save
+an image in the sample. Captures also appear in **Summary**. Select **Off** to
+stop preview.
 
-The local file is ignored by Git; the example contains no license values.
-The app loads it when you select Continue, before enabling Start.
-After changing the file, reload the page. Missing or invalid configuration
-shows setup instructions in the connection dialog.
+Camera controls are **LED Intensity**, **Focus**, **Move**, **Zoom**, **Radius**,
+and **Reset**. Availability depends on the camera capabilities and selected mode;
+Move, Zoom, Radius, and Reset apply to the otoscope mask.
 
-These values are still downloaded by the browser. Ignoring the file prevents
-accidental Git inclusion; it does not make browser license values secret or
-remove any values already committed to Git history.
+During otoscope preview, use arrow keys to move, **+ / -** to zoom,
+**Page Up / Page Down** to adjust radius, and **Delete** to reset. Shortcuts are
+inactive while a button or input has keyboard focus.
 
-## Run in Visual Studio
+## Source and SDK
 
-1. Select `SampleApp` as the startup project.
-2. Select the **https** launch profile.
-3. Select Google Chrome or Microsoft Edge as the browser.
-4. Press **F5** to debug or **Ctrl+F5** to run without debugging.
-5. If prompted, trust the ASP.NET Core development HTTPS certificate.
-
-The default HTTPS address is:
-
-```text
-https://localhost:7242
-```
-
-The port can be changed in
-`SampleApp/Properties/launchSettings.json`. Using the HTTPS profile is
-recommended because the DECL communicates with the device through Web Serial.
-
-## Connect a MedWand
-
-After the application opens:
-
-1. Select **Continue** on the beta notice.
-2. Plug in the MedWand device.
-3. Select **Start** in the connection dialog.
-4. Choose the MedWand serial device when the browser prompts.
-
-Web Serial requires device selection to be initiated by a user action. Browser
-permissions are associated with the application's origin, so continue using the
-same HTTPS host and port after granting access.
+- `SampleApp/wwwroot/src/`: application and sensor examples
+- `SampleApp/wwwroot/assets/js/MWSDK.Javascript.js`: bundled SDK (`MedWandSdk` global)
 
 ## Troubleshooting
 
-- Use a current version of Chrome or Edge; other browsers may not support Web
-  Serial.
-- If the browser cannot find the device, verify that it is connected and that
-  another browser tab or desktop application is not already using its serial
-  port.
-- If HTTPS produces a certificate warning, use Visual Studio's certificate
-  prompt or run `dotnet dev-certs https --trust` from a developer terminal.
+- If the license does not load, check `license.local.txt` for valid JSON and
+  nonempty `license` and `publicKey` values, then reload.
+- If the device cannot connect, check its USB connection and close other tabs or
+  applications using it.
+- If camera or microphone access fails, check browser permissions for the sample.
+- For development HTTPS certificate errors, run `dotnet dev-certs https --trust`.
