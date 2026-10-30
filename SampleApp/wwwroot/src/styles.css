@@ -47,6 +47,25 @@ button:disabled {
   opacity: 0.38;
 }
 
+.firmware-progress {
+  margin-top: 1.25rem;
+}
+
+.firmware-progress-status {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 3rem;
+}
+
+.firmware-progress-status .spinner-border {
+  flex: 0 0 auto;
+}
+
+.firmware-progress-warning {
+  margin: 1rem 0 0;
+}
+
 .app-header {
   height: 123px;
   overflow: hidden;

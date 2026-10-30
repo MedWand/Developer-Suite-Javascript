@@ -243,7 +243,7 @@ export function createCameraSensor(
   }
 
   async function setFocusMode(mode) {
-    await applyFocus(controller => controller.CameraSetFocusMode(mode));
+    await applyFocus(controller => controller.CameraSetFocusMode(mode, false));
   }
 
   function handleKeydown(event) {
