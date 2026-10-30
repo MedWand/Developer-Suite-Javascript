@@ -2,7 +2,7 @@ import { createTemperatureSensor } from "./sensors/temperature.js";
 import { createPulseOximeterSensor } from "./sensors/pulse-oximeter.js";
 import { createEcgSensor } from "./sensors/ecg.js";
 import { createStethoscopeSensor } from "./sensors/stethoscope.js";
-import { createCameraSensor } from "./sensors/camera.js?v=20260928.2";
+import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
 
 (() => {
   "use strict";
@@ -16,6 +16,8 @@ import { createCameraSensor } from "./sensors/camera.js?v=20260928.2";
   if (!decl) throw new Error("MedWand DECL bundle did not load.");
 
   let medWandController = null;
+  let firmwareController = null;
+  let pendingFirmwareUpdate = null;
   let activeView = "home";
   let activeSensor = null;
   let navigationLocked = false;
@@ -59,6 +61,64 @@ import { createCameraSensor } from "./sensors/camera.js?v=20260928.2";
 
   function hideConnectionModal() {
     connectionModal.hide();
+  }
+
+  function setConnectionPrompt(title, description) {
+    $("#connection-modal-title").text(title);
+    $("#connection-modal-description").text(description);
+  }
+
+  function firmwareStageDetail(state) {
+    switch (String(state)) {
+      case "Initializing":
+        return "Preparing the MedWand and validating the downloaded firmware.";
+      case "Reconnecting":
+        return "Waiting for the MedWand to restart in the required mode.";
+      case "Erasing":
+        return "Erasing the previous firmware image.";
+      case "Programming":
+        return "Installing the new firmware. This step can take several minutes.";
+      case "Reading":
+        return "Reading the programmed firmware back from the MedWand.";
+      case "Verifying":
+        return "Verifying the programmed bytes and firmware SHA-256.";
+      case "Commiting":
+        return "Committing the verified firmware image.";
+      case "Complete":
+        return "Firmware installation completed successfully.";
+      default:
+        return "Preparing the MedWand and downloading firmware.";
+    }
+  }
+
+  function showFirmwareProgress(currentVersion, requiredVersion) {
+    $("#connection-modal-description").text(
+      `Updating MedWand firmware ${currentVersion} to ${requiredVersion}.`,
+    );
+    $("#firmware-progress").prop("hidden", false);
+    $("#connection-modal-footer").prop("hidden", true);
+    updateFirmwareProgress("Starting");
+    showConnectionModal();
+  }
+
+  function updateFirmwareProgress(state) {
+    const displayState = String(state) === "Commiting" ? "Committing" : String(state);
+    $("#firmware-progress-stage").text(displayState);
+    $("#firmware-progress-detail").text(firmwareStageDetail(state));
+  }
+
+  function hideFirmwareProgress() {
+    $("#firmware-progress").prop("hidden", true);
+    $("#connection-modal-footer").prop("hidden", false);
+    updateFirmwareProgress("Starting");
+  }
+
+  function resetConnectionPrompt() {
+    hideFirmwareProgress();
+    setConnectionPrompt(
+      "Connect MedWand",
+      "Plug in the MedWand device, then select Start to choose its serial device and establish the Web Serial connection.",
+    );
   }
 
   function setConnection(
@@ -287,6 +347,9 @@ import { createCameraSensor } from "./sensors/camera.js?v=20260928.2";
       // Match the Functional Test App lifecycle: connect first, then create
       // sensor modules with Configure immediately before Initialize.
       await medWandController.Connect();
+      // Check the firmware version anf if an update is needed, use
+      // FirmwareController before initialization.
+      await medWandController.CheckFirmwareVersion();
       setConnection(true, "Initializing");
       medWandController.Configure($("#ecg-canvas")[0]);
       await medWandController.Initialize();
@@ -296,19 +359,138 @@ import { createCameraSensor } from "./sensors/camera.js?v=20260928.2";
       await loadDeviceDetails();
       setConnection(true, "Initialized");
       $("#license-state").text("Valid");
-      log("MedWand initialized");
+
+      pendingFirmwareUpdate = null;
+      resetConnectionPrompt();
       hideConnectionModal();
     } catch (error) {
-      log(`Connection failed: ${errorText(error)}`);
+      if (error instanceof decl.MedWandFirmwareUpdateRequiredException) {
+        await prepareFirmwareUpdate(error);
+        return;
+      }
+
+      hideFirmwareProgress();
+      setConnectionPrompt(
+        "Connection Failed",
+        `${errorText(error)} Select Start to try connecting again.`,
+      );
       if (medWandController) {
-        medWandController.Dispose();
+        await medWandController.Dispose();
         medWandController = null;
       }
       activeSensor = null;
       navigationLocked = false;
       setConnection(false);
     } finally {
-      setBusy($button, false, "Start");
+      setBusy(
+        $button,
+        false,
+        pendingFirmwareUpdate ? "Update Firmware" : "Start",
+      );
+    }
+  }
+
+  async function prepareFirmwareUpdate(error) {
+    const active = medWandController;
+    if (active) {
+      try {
+        await active.Dispose();
+      } finally {
+        if (medWandController === active) medWandController = null;
+      }
+    }
+    activeSensor = null;
+    navigationLocked = false;
+    pendingFirmwareUpdate = {
+      currentVersion: error.CurrentVersion,
+      requiredVersion: error.RequiredVersion,
+    };
+    hideFirmwareProgress();
+    setConnection(false, "Firmware update required");
+    $(".nav-item:not([data-view='summary'])").prop("disabled", true);
+    setConnectionPrompt(
+      "Firmware Update Required",
+      `Firmware ${error.CurrentVersion} must be updated to ${error.RequiredVersion}. Select Update Firmware, choose the MedWand again, and keep it connected until the update and restart verification complete.`,
+    );
+
+    showConnectionModal();
+  }
+
+  function attachFirmwareControllerEvents(updater, onError) {
+    updater.on("FirmwareStateChanged", (value) => {
+      const state = String(value);
+      updateFirmwareProgress(state);
+      setConnection(false, `Firmware: ${state}`);
+    });
+    updater.on("FirmwareError", onError);
+  }
+
+  async function runFirmwareUpdate() {
+    if (!pendingFirmwareUpdate || !localLicense) return;
+    const requestedUpdate = pendingFirmwareUpdate;
+    const $button = $("#connect-button");
+    setBusy($button, true, "Update Firmware");
+    const updater = new decl.FirmwareController();
+    firmwareController = updater;
+    let firmwareError = null;
+    attachFirmwareControllerEvents(updater, (error) => {
+      firmwareError = error;
+    });
+    setConnectionPrompt(
+      "Updating Firmware",
+      "Do not unplug the MedWand, close this page, or suspend the computer until the update and restart verification complete.",
+    );
+    showFirmwareProgress(
+      requestedUpdate.currentVersion,
+      requestedUpdate.requiredVersion,
+    );
+
+
+    try {
+      // StartAsync must be invoked synchronously from the Update Firmware click
+      // so the browser can display the Web Serial device picker.
+      const operation = updater.StartAsync();
+      const updated = await operation;
+      if (!updated) {
+        throw firmwareError || new Error("The firmware update did not complete.");
+      }
+
+      pendingFirmwareUpdate = null;
+      await updater.DisposeAsync();
+      if (firmwareController === updater) firmwareController = null;
+      setConnection(false, "Reconnecting");
+      updateFirmwareProgress("Reconnecting");
+      $("#firmware-progress-detail").text(
+        "Firmware verified. Reconnecting through the MedWand controller.",
+      );
+      await connectDecl(localLicense.license, localLicense.publicKey);
+    } catch (error) {
+
+      setConnection(false, "Firmware update failed");
+      hideFirmwareProgress();
+      if (/commit was acknowledged/i.test(errorText(error))) {
+        pendingFirmwareUpdate = null;
+        setConnectionPrompt(
+          "Verify Firmware Connection",
+          `${errorText(error)} Select Start to reconnect normally and verify the installed firmware version.`,
+        );
+      } else {
+        setConnectionPrompt(
+          "Firmware Update Required",
+          `The firmware update did not complete: ${errorText(error)} Select Retry Firmware Update when the MedWand is ready.`,
+        );
+      }
+      showConnectionModal();
+    } finally {
+      if (firmwareController === updater) {
+        await updater.DisposeAsync();
+        firmwareController = null;
+      }
+      setBusy(
+        $button,
+        false,
+        pendingFirmwareUpdate ? "Retry Firmware Update" : "Start",
+      );
     }
   }
 
@@ -361,16 +543,18 @@ import { createCameraSensor } from "./sensors/camera.js?v=20260928.2";
     } catch (error) {
       log(`Disconnect: ${errorText(error)}`);
     }
-    medWandController.Dispose();
+    await medWandController.Dispose();
     medWandController = null;
     navigationLocked = false;
     if (updateUi) {
+      pendingFirmwareUpdate = null;
       setConnection(false);
       $("#is-initialized").text("false");
       updateGeneralStatus();
       $(".nav-item:not([data-view='summary'])").prop("disabled", true);
       await showView("home");
       log("Device disconnected");
+      resetConnectionPrompt();
       showConnectionModal();
     }
   }
@@ -387,9 +571,10 @@ import { createCameraSensor } from "./sensors/camera.js?v=20260928.2";
     }
   }
 
-  $("#connect-button").on("click", () =>
-    localLicense && connectDecl(localLicense.license, localLicense.publicKey),
-  );
+  $("#connect-button").on("click", () => {
+    if (pendingFirmwareUpdate) return runFirmwareUpdate();
+    if (localLicense) return connectDecl(localLicense.license, localLicense.publicKey);
+  });
   $("#disconnect-button").on("click", () => {
     if (globalThis.confirm("Are you sure you want to disconnect?"))
       disconnectDecl();
@@ -421,7 +606,10 @@ import { createCameraSensor } from "./sensors/camera.js?v=20260928.2";
   $(navigationSelector).on("click", function () {
     showView($(this).data("view")).catch(handleActionError);
   });
-  $(window).on("beforeunload", () => medWandController?.Dispose());
+  $(window).on("beforeunload", () => {
+    void medWandController?.Dispose();
+    void firmwareController?.DisposeAsync();
+  });
 
   function handleActionError(error) {
     log(`Action failed: ${errorText(error)}`);

@@ -10,7 +10,7 @@
       integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
       crossorigin="anonymous"
     />
-    <link rel="stylesheet" href="src/styles.css?v=20260924.1" />
+    <link rel="stylesheet" href="src/styles.css?v=20261028.1" />
   </head>
   <body class="bg-secondary">
     <div
@@ -51,8 +51,29 @@
               Plug in the MedWand device, then select Start to choose its serial
               device and establish the Web Serial connection.
             </p>
+            <div
+              id="firmware-progress"
+              class="firmware-progress"
+              role="status"
+              aria-live="polite"
+              hidden
+            >
+              <div class="firmware-progress-status">
+                <div class="spinner-border text-primary" aria-hidden="true"></div>
+                <div>
+                  <strong id="firmware-progress-stage">Preparing firmware update</strong>
+                  <div id="firmware-progress-detail" class="text-body-secondary">
+                    Preparing the MedWand and downloading firmware.
+                  </div>
+                </div>
+              </div>
+              <div class="alert alert-warning firmware-progress-warning" role="alert">
+                <strong>Keep the MedWand connected.</strong>
+                Do not unplug the device, close this page, or suspend the computer until the update completes.
+              </div>
+            </div>
           </div>
-          <div class="modal-footer">
+          <div id="connection-modal-footer" class="modal-footer">
             <button id="connect-button" class="btn btn-success px-4">
               Start
             </button>
@@ -165,7 +186,7 @@
               </div>
               <div>
                 <dt>Version:</dt>
-                <dd>0.0.0.3</dd>
+                <dd>0.0.0.4</dd>
               </div>
               <div>
                 <dt>Build:</dt>
@@ -233,9 +254,6 @@
               </div>
             </dl>
           </div>
-          <ol id="activity-log" class="activity-log" hidden aria-live="polite">
-            <li><time>Ready</time><span>Sample application loaded</span></li>
-          </ol>
         </section>
 
         <section id="view-summary" class="view summary-view">
@@ -486,7 +504,7 @@
       integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
       crossorigin="anonymous"
     ></script>
-    <script src="/assets/js/MWSDK.Javascript.js?v=0.0.0.1&amp;build=af523fa00b88"></script>
-    <script type="module" src="src/app.js?v=20260928.2"></script>
+    <script src="/assets/js/MWSDK.Javascript.js?v=0.0.0.1&amp;build=3b8a956460b1"></script>
+    <script type="module" src="src/app.js?v=20261030.4"></script>
   </body>
 </html>

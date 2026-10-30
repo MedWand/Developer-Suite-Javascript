@@ -12,6 +12,11 @@ SDK; no npm install or JavaScript build step is required.
 - A MedWand device and supplied DECL license and public key
 - Internet access for Bootstrap assets loaded from a CDN
 
+## Supported Browsers
+-Windows: Chrome, Edge, Brave, Firefox
+-MacOS: Chome
+-iPad OS: None
+
 ## Setup and run
 
 1. Open `Developer-Suite-Javascript.slnx` in Visual Studio.
@@ -30,6 +35,12 @@ SDK; no npm install or JavaScript build step is required.
    in Chrome or Edge. Trust the development HTTPS certificate if prompted.
 5. Select **Continue**, connect the MedWand, and select **Start**. Choose the
    MedWand serial device if prompted and allow camera or microphone access when needed.
+
+When the connected MedWand requires newer firmware, the sample releases the
+normal controller and displays **Update Firmware**. Select it and choose the
+MedWand again to run the production firmware download, programming, verification,
+commit, and restart workflow. Keep the device connected and the computer awake
+until the sample reconnects and finishes initialization.
 
 The license file is ignored by Git but is downloaded by the browser. Reload the
 page after changing it. Launch addresses are configured in
