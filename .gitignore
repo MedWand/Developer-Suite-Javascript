@@ -433,3 +433,7 @@ FodyWeavers.xsd
 
 # Local browser sample license values
 /SampleApp/wwwroot/license.local.txt
+
+# Generated browser bundle and legacy local SDK declarations
+/SampleApp/wwwroot/assets/js/sample-app.js
+/SampleApp/types/MWSDK.Javascript.d.ts

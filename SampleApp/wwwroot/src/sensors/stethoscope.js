@@ -120,11 +120,12 @@ export function createStethoscopeSensor(
     }
 
     captureCount += 1;
-    const mode = getController()?.StethoscopeMode || decl.MicrophoneModes.Off;
-    const fileName = `stethoscope-${mode.toLowerCase()}-${captureCount}.wav`;
+    const mode = getController()?.StethoscopeMode ?? decl.MicrophoneModes.Off;
+    const modeName = decl.MicrophoneModes[mode];
+    const fileName = `stethoscope-${modeName.toLowerCase()}-${captureCount}.wav`;
     const $capture = $("<div>", { class: "stethoscope-recording" });
     $("<strong>")
-      .text(`${mode} recording ${captureCount}`)
+      .text(`${modeName} recording ${captureCount}`)
       .appendTo($capture);
     $("<audio>", { controls: true, preload: "metadata", src: dataUri }).appendTo(
       $capture,
@@ -133,7 +134,7 @@ export function createStethoscopeSensor(
       .text("Download WAV")
       .appendTo($capture);
     $("#stethoscope-captures").find("p").remove().end().append($capture);
-    log(`Stethoscope ${mode} recording captured (${bytes.byteLength} PCM bytes).`);
+    log(`Stethoscope ${modeName} recording captured (${bytes.byteLength} PCM bytes).`);
     setStatus();
   }
 
@@ -146,7 +147,7 @@ export function createStethoscopeSensor(
   }
 
   function setStatus(override) {
-    const mode = getController()?.StethoscopeMode || decl.MicrophoneModes.Off;
+    const mode = getController()?.StethoscopeMode ?? decl.MicrophoneModes.Off;
     const reading =
       override ||
       (mode === decl.MicrophoneModes.Off
@@ -155,7 +156,7 @@ export function createStethoscopeSensor(
           ? "Recording"
           : "On");
     $("#view-stethoscope .reading-state").text(
-      `${mode} : ${reading} [${captureCount} Captured]`,
+      `${decl.MicrophoneModes[mode]} : ${reading} [${captureCount} Captured]`,
     );
   }
 

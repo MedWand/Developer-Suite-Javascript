@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\assets\css\" />
+    <Content Update="wwwroot\license.local.txt" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
 </Project>

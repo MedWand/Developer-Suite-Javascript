@@ -2,24 +2,25 @@
 
 Browser sample for the MedWand Device Encapsulation and Communication Library
 (DECL), demonstrating temperature, pulse oximetry, ECG, stethoscope, and camera
-workflows. An ASP.NET Core (.NET 10) application serves the sample and bundled
-SDK; no npm install or JavaScript build step is required.
+workflows. The sample installs the SDK from npm and bundles it into a browser
+app served by ASP.NET Core (.NET 10).
 
 ## Requirements
 
-- Visual Studio with the **ASP.NET and web development** workload and .NET 10 SDK
+- .NET 10 SDK and Node.js 22 with npm
+- For Visual Studio, the **ASP.NET and web development** workload
 - Google Chrome or Microsoft Edge with Web Serial support
 - A MedWand device and supplied DECL license and public key
 - Internet access for Bootstrap assets loaded from a CDN
 
-## Supported Browsers
--Windows: Chrome, Edge, Brave, Firefox
--MacOS: Chome
--iPad OS: None
-
 ## Setup and run
 
-1. Open `Developer-Suite-Javascript.slnx` in Visual Studio.
+1. From the repository root, install the locked dependencies and build the browser bundle.
+
+   ```sh
+   npm ci
+   npm run build
+   ```
 2. Copy `SampleApp/wwwroot/license.example.txt` to
    `SampleApp/wwwroot/license.local.txt` and fill in the JSON values:
 
@@ -30,9 +31,11 @@ SDK; no npm install or JavaScript build step is required.
    }
    ```
 
-3. Set `SampleApp` as the startup project and select the **https** launch profile.
-4. Run with **F5** or **Ctrl+F5**, then open [https://localhost:7242](https://localhost:7242)
-   in Chrome or Edge. Trust the development HTTPS certificate if prompted.
+3. Run `dotnet run --project SampleApp --launch-profile https`. In Visual Studio,
+   open `Developer-Suite-Javascript.slnx`, set `SampleApp` as the startup project,
+   select the **https** profile, and press **F5**.
+4. Open [https://localhost:7242](https://localhost:7242) in Chrome or Edge. Trust
+   the development HTTPS certificate if prompted.
 5. Select **Continue**, connect the MedWand, and select **Start**. Choose the
    MedWand serial device if prompted and allow camera or microphone access when needed.
 
@@ -42,8 +45,8 @@ MedWand again to run the production firmware download, programming, verification
 commit, and restart workflow. Keep the device connected and the computer awake
 until the sample reconnects and finishes initialization.
 
-The license file is ignored by Git but is downloaded by the browser. Reload the
-page after changing it. Launch addresses are configured in
+The browser downloads `license.local.txt` when the page loads. Git and .NET
+publish exclude this file. Reload the page after changing it. Launch addresses are configured in
 `SampleApp/Properties/launchSettings.json`.
 
 ## Camera
@@ -63,7 +66,11 @@ inactive while a button or input has keyboard focus.
 ## Source and SDK
 
 - `SampleApp/wwwroot/src/`: application and sensor examples
-- `SampleApp/wwwroot/assets/js/MWSDK.Javascript.js`: bundled SDK (`MedWandSdk` global)
+- `@medwand/mwsdk-javascript`: device SDK installed from npm
+- `SampleApp/wwwroot/assets/js/sample-app.js`: generated browser bundle
+
+Run `npm run build` after editing the JavaScript or changing the SDK dependency.
+Run it before `dotnet publish SampleApp -c Release` to include the browser bundle in the publish output.
 
 ## Troubleshooting
 

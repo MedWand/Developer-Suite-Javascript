@@ -1,8 +1,10 @@
+import * as decl from "@medwand/mwsdk-javascript";
+
 import { createTemperatureSensor } from "./sensors/temperature.js";
 import { createPulseOximeterSensor } from "./sensors/pulse-oximeter.js";
 import { createEcgSensor } from "./sensors/ecg.js";
 import { createStethoscopeSensor } from "./sensors/stethoscope.js";
-import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
+import { createCameraSensor } from "./sensors/camera.js";
 
 (() => {
   "use strict";
@@ -10,14 +12,7 @@ import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
   // Load configuration before Start to preserve the Web Serial user action.
   let localLicense = null;
 
-
-  // DECL bundle entry point. All MedWand device operations below flow through this object.
-  const decl = globalThis.MedWandSdk;
-  if (!decl) throw new Error("MedWand DECL bundle did not load.");
-
   let medWandController = null;
-  let firmwareController = null;
-  let pendingFirmwareUpdate = null;
   let activeView = "home";
   let activeSensor = null;
   let navigationLocked = false;
@@ -61,64 +56,6 @@ import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
 
   function hideConnectionModal() {
     connectionModal.hide();
-  }
-
-  function setConnectionPrompt(title, description) {
-    $("#connection-modal-title").text(title);
-    $("#connection-modal-description").text(description);
-  }
-
-  function firmwareStageDetail(state) {
-    switch (String(state)) {
-      case "Initializing":
-        return "Preparing the MedWand and validating the downloaded firmware.";
-      case "Reconnecting":
-        return "Waiting for the MedWand to restart in the required mode.";
-      case "Erasing":
-        return "Erasing the previous firmware image.";
-      case "Programming":
-        return "Installing the new firmware. This step can take several minutes.";
-      case "Reading":
-        return "Reading the programmed firmware back from the MedWand.";
-      case "Verifying":
-        return "Verifying the programmed bytes and firmware SHA-256.";
-      case "Commiting":
-        return "Committing the verified firmware image.";
-      case "Complete":
-        return "Firmware installation completed successfully.";
-      default:
-        return "Preparing the MedWand and downloading firmware.";
-    }
-  }
-
-  function showFirmwareProgress(currentVersion, requiredVersion) {
-    $("#connection-modal-description").text(
-      `Updating MedWand firmware ${currentVersion} to ${requiredVersion}.`,
-    );
-    $("#firmware-progress").prop("hidden", false);
-    $("#connection-modal-footer").prop("hidden", true);
-    updateFirmwareProgress("Starting");
-    showConnectionModal();
-  }
-
-  function updateFirmwareProgress(state) {
-    const displayState = String(state) === "Commiting" ? "Committing" : String(state);
-    $("#firmware-progress-stage").text(displayState);
-    $("#firmware-progress-detail").text(firmwareStageDetail(state));
-  }
-
-  function hideFirmwareProgress() {
-    $("#firmware-progress").prop("hidden", true);
-    $("#connection-modal-footer").prop("hidden", false);
-    updateFirmwareProgress("Starting");
-  }
-
-  function resetConnectionPrompt() {
-    hideFirmwareProgress();
-    setConnectionPrompt(
-      "Connect MedWand",
-      "Plug in the MedWand device, then select Start to choose its serial device and establish the Web Serial connection.",
-    );
   }
 
   function setConnection(
@@ -297,13 +234,13 @@ import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
   // DECL events: subscribe once after controller construction and dispose on disconnect.
   function attachDeclControllerEvents() {
     medWandController.on("OnDeviceStateChanged", (value) => {
-      setConnection(medWandController.IsConnected, String(value));
-      log(`Device state: ${value}`);
+      setConnection(medWandController.IsConnected, decl.DeviceState[value]);
+      log(`Device state: ${decl.DeviceState[value]}`);
     });
     medWandController.on("OnReadingStateChanged", (value) => {
       const sensor = sensorFor(activeView);
-      if (sensor) sensor.handleReadingState(value);
-      log(`Reading state: ${value}`);
+      if (sensor) sensor.handleReadingState(decl.ReadingState[value]);
+      log(`Reading state: ${decl.ReadingState[value]}`);
     });
     medWandController.on("OnReadingReceived", (reading) => {
       const sensor = sensorFor(activeView);
@@ -317,7 +254,7 @@ import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
       const sensor = sensorFor(activeView);
       if (sensor) sensor.handleDeviceError(error);
     });
-    medWandController.on("OnLicenseError", (value) => log(`License: ${value}`));
+    medWandController.on("OnLicenseError", (value) => log(`License: ${decl.LicenseState[value]}`));
   }
 
   function formatReading(value) {
@@ -359,23 +296,12 @@ import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
       await loadDeviceDetails();
       setConnection(true, "Initialized");
       $("#license-state").text("Valid");
-
-      pendingFirmwareUpdate = null;
-      resetConnectionPrompt();
+      log("MedWand initialized");
       hideConnectionModal();
     } catch (error) {
-      if (error instanceof decl.MedWandFirmwareUpdateRequiredException) {
-        await prepareFirmwareUpdate(error);
-        return;
-      }
-
-      hideFirmwareProgress();
-      setConnectionPrompt(
-        "Connection Failed",
-        `${errorText(error)} Select Start to try connecting again.`,
-      );
+      log(`Connection failed: ${errorText(error)}`);
       if (medWandController) {
-        await medWandController.Dispose();
+        medWandController.Dispose();
         medWandController = null;
       }
       activeSensor = null;
@@ -500,10 +426,10 @@ import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
       try {
           bootloaderMode = await medWandController.IsBootloaderMode(false);
       } catch {
-          // The beta sample presents an unanswered bootloader query as False.
+          // Display an unanswered bootloader query as False.
       }
     $("#device-id").text(medWandController.DeviceId || "--");
-    $("#generation").text(String(medWandController.Generation ?? "--"));
+    $("#generation").text(decl.MedWandGeneration[medWandController.Generation] ?? "--");
     $("#firmware").text(medWandController.FirmwareVersion || "--");
     $("#udi").text(medWandController.Udi || "--");
     $("#bootloader-mode").text(bootloaderMode ? "True" : "False");
@@ -531,7 +457,7 @@ import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
       return;
     }
     $("#status-bar").text(
-      `Device: ${medWandController.ComPort || "WebSerial"}/${medWandController.VendorId || "--"}/${medWandController.ProductId || "--"} | ${medWandController.Udi || "--"} | ${medWandController.Generation ?? "--"} v${medWandController.FirmwareVersion || "--"}`,
+      `Device: ${medWandController.ComPort || "WebSerial"}/${medWandController.VendorId || "--"}/${medWandController.ProductId || "--"} | ${medWandController.Udi || "--"} | ${decl.MedWandGeneration[medWandController.Generation] ?? "--"} v${medWandController.FirmwareVersion || "--"}`,
     );
   }
 
@@ -543,18 +469,16 @@ import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
     } catch (error) {
       log(`Disconnect: ${errorText(error)}`);
     }
-    await medWandController.Dispose();
+    medWandController.Dispose();
     medWandController = null;
     navigationLocked = false;
     if (updateUi) {
-      pendingFirmwareUpdate = null;
       setConnection(false);
       $("#is-initialized").text("false");
       updateGeneralStatus();
       $(".nav-item:not([data-view='summary'])").prop("disabled", true);
       await showView("home");
       log("Device disconnected");
-      resetConnectionPrompt();
       showConnectionModal();
     }
   }
@@ -571,10 +495,9 @@ import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
     }
   }
 
-  $("#connect-button").on("click", () => {
-    if (pendingFirmwareUpdate) return runFirmwareUpdate();
-    if (localLicense) return connectDecl(localLicense.license, localLicense.publicKey);
-  });
+  $("#connect-button").on("click", () =>
+    localLicense && connectDecl(localLicense.license, localLicense.publicKey),
+  );
   $("#disconnect-button").on("click", () => {
     if (globalThis.confirm("Are you sure you want to disconnect?"))
       disconnectDecl();
@@ -606,10 +529,7 @@ import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
   $(navigationSelector).on("click", function () {
     showView($(this).data("view")).catch(handleActionError);
   });
-  $(window).on("beforeunload", () => {
-    void medWandController?.Dispose();
-    void firmwareController?.DisposeAsync();
-  });
+  $(window).on("beforeunload", () => medWandController?.Dispose());
 
   function handleActionError(error) {
     log(`Action failed: ${errorText(error)}`);
