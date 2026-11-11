@@ -48,9 +48,15 @@ export function createStethoscopeSensor(
       setNavigationLocked(false);
       $("#steth-record").text("Start Recording").removeClass("stop");
     }
-    const started = await getController().SetStethoscopeMode(
-      decl.MicrophoneModes[modeName],
-    );
+    const stethoscopeMode = decl.MicrophoneModes[modeName];
+
+    // Use this call to set the stethoscope mode without using the MedWand SDK audio stack.
+    // The application is responsible for previewing and capturing the MedWand microphone audio.
+    // const started = await getController().SetStethoscopeMode(stethoscopeMode);
+
+    // Use this call to set the stethoscope mode with the MedWand SDK audio stack.
+    // The SDK handles microphone capture, speaker preview, and recording frames.
+    const started = await getController().SetStethoscopeMode(stethoscopeMode, null);
 
     if (started && modeName !== "Off") {
       attachRecordingCapture();
@@ -73,7 +79,7 @@ export function createStethoscopeSensor(
       return;
     }
     if (recording) getController().StopRecording();
-    await getController().SetStethoscopeMode(decl.MicrophoneModes.Off);
+    await getController().SetStethoscopeMode(decl.MicrophoneModes.Off, null);
     detachRecordingCapture();
     setActiveSensor(null);
     recording = false;
