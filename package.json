@@ -1,0 +1,26 @@
+{
+  "name": "developer-suite-javascript",
+  "version": "1.0.0",
+  "description": "Browser sample for the MedWand Device Encapsulation and Communication Library (DECL).",
+  "scripts": {
+    "build": "esbuild SampleApp/wwwroot/src/app.js --bundle --platform=browser --format=esm --target=es2022 --outfile=SampleApp/wwwroot/assets/js/sample-app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MedWand/Developer-Suite-Javascript.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MedWand/Developer-Suite-Javascript/issues"
+  },
+  "homepage": "https://github.com/MedWand/Developer-Suite-Javascript#readme",
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "@medwand/mwsdk-javascript": "3.2.2"
+  },
+  "private": true
+}

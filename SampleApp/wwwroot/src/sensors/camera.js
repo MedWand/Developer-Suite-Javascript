@@ -49,7 +49,7 @@ export function createCameraSensor(
 
   async function selectMode($button) {
     if (changingMode) return;
-    if ($button.data("cameraMode") === getController()?.CameraMode) return;
+    if (decl.CameraModes[$button.data("cameraMode")] === getController()?.CameraMode) return;
     changingMode = true;
     hasFrame = false;
     refreshCaptureButton();
@@ -232,9 +232,8 @@ export function createCameraSensor(
     changingFocus = true;
     refreshControls();
     try {
-      const applied = await change(controller);
+      await change(controller);
       if (controller !== getController() || !controller.CameraIsMonitoring) return;
-      if (!applied) throw new Error("The browser or camera did not apply the requested focus setting.");
       setStatus("On");
     } finally {
       changingFocus = false;
@@ -243,7 +242,10 @@ export function createCameraSensor(
   }
 
   async function setFocusMode(mode) {
-    await applyFocus(controller => controller.CameraSetFocusMode(mode));
+    await applyFocus(async controller => {
+      await controller.CameraSetFocusMode(mode, false);
+      if (controller.CameraFocusMode !== mode) throw new Error("The camera did not apply the requested focus mode.");
+    });
   }
 
   function handleKeydown(event) {
@@ -292,21 +294,21 @@ export function createCameraSensor(
   function setStatus(value) {
     if (["Starting", "Started", "Reading"].includes(value)) value = "On";
     if (value === "Stopped") value = "Ready";
-    const mode = getController()?.CameraMode || decl.CameraModes.Off;
+    const mode = getController()?.CameraMode ?? decl.CameraModes.Off;
     const timer =
       getController()?.CameraHasOnTimer && mode !== decl.CameraModes.Off
         ? ` (${getController().CameraOnTimeMax}s available)`
         : "";
     $("#view-camera .reading-state").text(
-      `${mode} : ${value}${timer} [${captureCount} Captured]`,
+      `${decl.CameraModes[mode]} : ${value}${timer} [${captureCount} Captured]`,
     );
   }
 
   function storeCapture(data, mode) {
-    $("<img>", { src: data, alt: `${mode} capture` })
+    $("<img>", { src: data, alt: `${decl.CameraModes[mode]} capture` })
       .attr({
         "data-captured-at": new Date().toISOString(),
-        "data-mode": String(mode),
+        "data-mode": decl.CameraModes[mode],
       })
       .appendTo("#camera-captures");
   }
@@ -315,7 +317,7 @@ export function createCameraSensor(
     runCommand($(this).data("cameraCommand"));
   });
   $("#camera-light").on("change", function () {
-    Promise.resolve(getController()?.CameraSetLedIntensity(Number($(this).val())))
+    Promise.resolve(getController()?.CameraSetLedIntensity(Math.round(Number($(this).val()))))
       .then(refreshControls)
       .catch(handleError);
   });
@@ -324,9 +326,8 @@ export function createCameraSensor(
   $("#camera-focus-value").on("change", function () {
     const requestedValue = Number($(this).val());
     applyFocus(async controller => {
-      const applied = await controller.CameraSetFocusValue(requestedValue);
-      if (applied) focusValue = requestedValue;
-      return applied;
+      await controller.CameraSetFocusValue(requestedValue);
+      if (controller.CameraFocusMode === decl.FocusModes.Manual) focusValue = requestedValue;
     }).catch(handleError);
   });
 

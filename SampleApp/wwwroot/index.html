@@ -10,483 +10,450 @@
       integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
       crossorigin="anonymous"
     />
-    <link rel="stylesheet" href="src/styles.css?v=20260924.1" />
+    <link rel="stylesheet" href="src/styles.css" />
   </head>
   <body class="bg-secondary">
-    <div
-      id="startup-notice"
-      class="startup-notice d-flex flex-column align-items-center justify-content-center text-white"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="startup-notice-text"
-    >
-      <p id="startup-notice-text">
-        This is a BETA only sample application and DECL. This is not intended
-        for use in production and should only be used for initial development
-        work. Camera and stethoscope testing require browser permission. You
-        will still need to request a license through your sales representative.
-      </p>
-      <button id="continue-button" class="btn btn-success btn-lg px-5">
-        Continue
-      </button>
-    </div>
-
-    <div
-      id="connection-modal"
-      class="modal fade"
-      tabindex="-1"
-      aria-labelledby="connection-modal-title"
-      aria-describedby="connection-modal-description"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h1 id="connection-modal-title" class="modal-title fs-5">
-              Connect MedWand
-            </h1>
-          </div>
-          <div class="modal-body">
-            <p id="connection-modal-description" class="mb-0">
-              Plug in the MedWand device, then select Start to choose its serial
-              device and establish the Web Serial connection.
-            </p>
-          </div>
-          <div class="modal-footer">
-            <button id="connect-button" class="btn btn-success px-4">
-              Start
-            </button>
-          </div>
-        </div>
+      <div id="startup-notice"
+           class="startup-notice d-flex flex-column align-items-center justify-content-center text-white"
+           role="dialog"
+           aria-modal="true"
+           aria-labelledby="startup-notice-text">
+          <p id="startup-notice-text">
+              This sample demonstrates how to integrate the MedWand JavaScript SDK.
+              You need a MedWand license to connect. Camera and stethoscope
+              preview may require browser permission.
+          </p>
+          <button id="continue-button" class="btn btn-success btn-lg px-5">
+              Continue
+          </button>
       </div>
-    </div>
 
-    <header class="app-header d-flex align-items-center bg-light border-bottom">
-      <button
-        id="home-button"
-        class="brand-home view-navigation"
-        data-view="home"
-        title="Home"
-      >
-        <img class="brand-logo" src="assets/images/logo.png" alt="MedWand" />
-      </button>
-      <nav
-        id="tool-nav"
-        class="tool-nav d-flex align-items-center"
-        aria-label="MedWand tools"
-      >
-        <button
-          class="nav-item"
-          data-view="temperature"
-          title="Thermometer"
-          disabled
-        >
-          <img
-            src="assets/images/Buttons/temperature-hover.png"
-            alt="Thermometer"
-          />
-        </button>
-        <button
-          class="nav-item"
-          data-view="spo2"
-          title="Pulse oximeter"
-          disabled
-        >
-          <img
-            src="assets/images/Buttons/spo2-hover.png"
-            alt="Pulse oximeter"
-          />
-        </button>
-        <button
-          class="nav-item"
-          data-view="stethoscope"
-          data-feature="stethoscope"
-          title="Stethoscope"
-          disabled
-        >
-          <img
-            src="assets/images/Buttons/stethoscope-hover.png"
-            alt="Stethoscope"
-          />
-        </button>
-        <button
-          class="nav-item"
-          data-view="camera"
-          data-feature="camera"
-          title="Camera"
-          disabled
-        >
-          <img src="assets/images/Buttons/camera-hover.png" alt="Camera" />
-        </button>
-        <button
-          class="nav-item"
-          data-view="ecg"
-          data-feature="ecg"
-          title="ECG"
-          disabled
-        >
-          <img src="assets/images/Buttons/ecg-hover.png" alt="ECG" />
-        </button>
-        <span class="toolbar-divider"></span>
-        <button
-          class="nav-item summary-tool view-navigation"
-          data-view="summary"
-          title="Summary"
-          hidden
-        >
-          <img src="assets/images/Buttons/summary-on.png" alt="Summary" />
-        </button>
-        <button
-          id="disconnect-button"
-          class="nav-item exit-tool"
-          title="Disconnect device"
-          aria-label="Disconnect device"
-          disabled
-        >
-          <img src="assets/images/Buttons/exit-off.png" alt="Disconnect" />
-        </button>
-      </nav>
-    </header>
-
-    <div class="app-shell">
-      <main id="workspace" class="workspace">
-        <section id="view-home" class="view active">
-          <div class="placeholder-info">
-            <h1>Application Information:</h1>
-            <hr />
-            <dl>
-              <div>
-                <dt>Company:</dt>
-                <dd>MedWand Solutions, Inc.</dd>
-              </div>
-              <div>
-                <dt>Product:</dt>
-                <dd>MedWand DECL Sample Application</dd>
-              </div>
-              <div>
-                <dt>Version:</dt>
-                <dd>0.0.0.3</dd>
-              </div>
-              <div>
-                <dt>Build:</dt>
-                <dd>Browser Sample</dd>
-              </div>
-            </dl>
-            <h1>Device Information:</h1>
-            <hr />
-            <dl>
-              <div>
-                <dt>ComPort:</dt>
-                <dd id="port">--</dd>
-              </div>
-              <div>
-                <dt>VendorId:</dt>
-                <dd id="vendor-id">--</dd>
-              </div>
-              <div>
-                <dt>ProductId:</dt>
-                <dd id="product-id">--</dd>
-              </div>
-              <div>
-                <dt>DeviceId:</dt>
-                <dd id="device-id">--</dd>
-              </div>
-              <div>
-                <dt>UDI:</dt>
-                <dd id="udi">--</dd>
-              </div>
-              <div>
-                <dt>DeviceState:</dt>
-                <dd id="device-state">Disconnected</dd>
-              </div>
-              <div>
-                <dt>IsConnected:</dt>
-                <dd id="is-connected">false</dd>
-              </div>
-              <div>
-                <dt>IsInitialized:</dt>
-                <dd id="is-initialized">false</dd>
-              </div>
-              <div>
-                <dt>IsBootloaderMode:</dt>
-                <dd id="bootloader-mode">--</dd>
-              </div>
-              <div>
-                <dt>Firmware:</dt>
-                <dd id="firmware">--</dd>
-              </div>
-              <div>
-                <dt>Generation:</dt>
-                <dd id="generation">--</dd>
-              </div>
-              <div hidden>
-                <dt>Camera:</dt>
-                <dd id="camera-model">--</dd>
-              </div>
-              <div hidden>
-                <dt>Stethoscope:</dt>
-                <dd id="stethoscope-model">--</dd>
-              </div>
-              <div>
-                <dt>License:</dt>
-                <dd id="license-state">Not configured</dd>
-              </div>
-            </dl>
-          </div>
-          <ol id="activity-log" class="activity-log" hidden aria-live="polite">
-            <li><time>Ready</time><span>Sample application loaded</span></li>
-          </ol>
-        </section>
-
-        <section id="view-summary" class="view summary-view">
-          <div class="view-heading bg-primary text-white px-3">
-            <h1>Summary</h1>
-          </div>
-          <div class="summary-content">
-            <section class="summary-section">
-              <h2>Measurements</h2>
-              <dl class="summary-measurements">
-                <div>
-                  <dt>Temperature</dt>
-                  <dd id="summary-temperature">--</dd>
-                </div>
-                <div>
-                  <dt>SpO2</dt>
-                  <dd id="summary-spo2">--</dd>
-                </div>
-                <div>
-                  <dt>Pulse Rate</dt>
-                  <dd id="summary-pulse">--</dd>
-                </div>
-              </dl>
-            </section>
-            <section class="summary-section">
-              <h2>ECG</h2>
-              <div id="summary-ecg" class="summary-captures">
-                <p>No ECG strips captured.</p>
-              </div>
-            </section>
-            <section class="summary-section">
-              <h2>Stethoscope</h2>
-              <div id="summary-stethoscope" class="summary-captures">
-                <p>No audio recordings captured.</p>
-              </div>
-            </section>
-            <section class="summary-section">
-              <h2>Camera</h2>
-              <div id="summary-camera" class="summary-captures summary-images">
-                <p>No images captured.</p>
-              </div>
-            </section>
-          </div>
-        </section>
-
-        <section id="view-temperature" class="view sensor-view">
-          <div class="view-heading bg-primary text-white px-3">
-            <h1>Thermometer</h1>
-          </div>
-          <div class="measurement">
-            <span id="temperature-value">--</span><small>&deg;F</small>
-          </div>
-          <div class="sensor-status bg-white">
-            <span class="reading-state">Ready</span>
-          </div>
-          <button
-            class="sensor-action btn btn-success rounded-0"
-            data-sensor="temperature"
-          >
-            Start
-          </button>
-        </section>
-
-        <section id="view-spo2" class="view sensor-view">
-          <div class="view-heading bg-primary text-white px-3">
-            <h1>Pulse Oximeter</h1>
-          </div>
-          <div class="dual-reading">
-            <div class="measurement">
-              <span>SpO2 : <b id="spo2-value">--</b></span>
-            </div>
-            <div class="measurement">
-              <span>Pulse Rate : <b id="pulse-value">--</b></span>
-            </div>
-          </div>
-          <div class="sensor-status bg-white">
-            <span class="reading-state">Ready</span>
-          </div>
-          <button
-            class="sensor-action btn btn-success rounded-0"
-            data-sensor="spo2"
-          >
-            Start
-          </button>
-        </section>
-
-        <section id="view-ecg" class="view sensor-view wide-view">
-          <div class="view-heading bg-primary text-white px-3">
-            <h1>ECG</h1>
-          </div>
-          <div id="ecg-stage" class="ecg-stage">
-            <canvas id="ecg-canvas" width="1000" height="481"></canvas>
-          </div>
-          <div class="sensor-status bg-white">
-            <span class="reading-state">Ready</span>
-          </div>
-          <button
-            id="ecg-record"
-            class="action-button btn btn-success rounded-0"
-            disabled
-          >
-            Start Recording
-          </button>
-          <div id="ecg-captures" hidden aria-hidden="true"></div>
-        </section>
-
-        <section id="view-stethoscope" class="view sensor-view">
-          <div class="view-heading bg-primary text-white px-3">
-            <h1>Stethoscope</h1>
-          </div>
-          <div class="stethoscope-stage">
-            <div class="stethoscope-preview">
-              <details id="stethoscope-recordings" class="stethoscope-recordings" hidden>
-                <summary>Recordings</summary>
-                <div id="stethoscope-captures" class="summary-captures">
-                  <p>No audio recordings captured.</p>
-                </div>
-              </details>
-            </div>
-            <aside class="stethoscope-mode-panel" aria-label="Stethoscope modes">
-              <h2>Modes</h2>
-              <div class="stethoscope-modes" role="group" aria-label="Stethoscope mode">
-                <button data-steth-mode="Off" class="btn btn-light active">
-                  <img src="assets/images/Buttons/Stethoscope/None-hover.png" alt="" />Off
-                </button>
-                <button data-steth-mode="Heart" class="btn btn-light">
-                  <img src="assets/images/Buttons/Stethoscope/Heart-hover.png" alt="" />Heart
-                </button>
-                <button data-steth-mode="Lungs" class="btn btn-light">
-                  <img src="assets/images/Buttons/Stethoscope/Lung-hover.png" alt="" />Lungs
-                </button>
-                <button data-steth-mode="Bowel" class="btn btn-light">
-                  <img src="assets/images/Buttons/Stethoscope/Bowel-hover.png" alt="" />Bowel
-                </button>
-              </div>
-            </aside>
-            <div class="stethoscope-audio-controls">
-              <label for="steth-volume">Volume
-                <input id="steth-volume" type="range" min="0" max="100" value="50" disabled />
-              </label>
-              <label for="steth-gain">Gain
-                <input id="steth-gain" type="range" min="0" max="100" value="30" disabled />
-              </label>
-            </div>
-          </div>
-          <div class="sensor-status bg-white">
-            <span class="reading-state">Ready</span>
-          </div>
-          <button
-            id="steth-record"
-            class="action-button btn btn-success rounded-0"
-            disabled
-          >
-            Start Recording
-          </button>
-        </section>
-        <section id="view-camera" class="view sensor-view wide-view">
-          <div class="view-heading bg-primary text-white px-3">
-            <h1>Camera</h1>
-          </div>
-          <div class="camera-layout">
-            <aside class="camera-settings" aria-label="Camera controls">
-              <h2>Controls</h2>
-              <div id="camera-light-controls" class="camera-control-group" hidden>
-                <label for="camera-light">LED Intensity</label>
-                <input id="camera-light" type="range" min="0" max="1" value="0" />
-              </div>
-              <div id="camera-focus-controls" class="camera-control-group" hidden>
-                <span>Focus</span>
-                <button id="camera-focus-auto" class="btn btn-light btn-sm" type="button">Auto</button>
-                <button id="camera-focus-manual" class="btn btn-light btn-sm" type="button">Manual</button>
-                <label id="camera-focus-value-label" for="camera-focus-value" hidden>Focus value</label>
-                <input id="camera-focus-value" type="range" hidden />
-              </div>
-              <div id="camera-otoscope-controls" class="camera-control-group otoscope-controls" hidden>
-                <span>Move</span>
-                <div class="direction-pad">
-                  <button class="btn btn-light btn-sm" type="button" data-camera-command="move-up" aria-label="Move up" title="Move up">↑</button>
-                  <div>
-                    <button class="btn btn-light btn-sm" type="button" data-camera-command="move-left" aria-label="Move left" title="Move left">←</button>
-                    <button class="btn btn-light btn-sm" type="button" data-camera-command="move-right" aria-label="Move right" title="Move right">→</button>
+      <div id="connection-modal"
+           class="modal fade"
+           tabindex="-1"
+           aria-labelledby="connection-modal-title"
+           aria-describedby="connection-modal-description"
+           aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                  <div class="modal-header">
+                      <h1 id="connection-modal-title" class="modal-title fs-5">
+                          Connect MedWand
+                      </h1>
                   </div>
-                  <button class="btn btn-light btn-sm" type="button" data-camera-command="move-down" aria-label="Move down" title="Move down">↓</button>
-                </div>
-                <label>Zoom</label>
-                <div>
-                  <button class="btn btn-light btn-sm" type="button" data-camera-command="zoom-out">−</button>
-                  <button class="btn btn-light btn-sm" type="button" data-camera-command="zoom-in">+</button>
-                </div>
-                <label>Radius</label>
-                <div>
-                  <button class="btn btn-light btn-sm" type="button" data-camera-command="radius-decrease">−</button>
-                  <button class="btn btn-light btn-sm" type="button" data-camera-command="radius-increase">+</button>
-                </div>
-                <button class="btn btn-light btn-sm" type="button" data-camera-command="reset">Reset</button>
+                  <div class="modal-body">
+                      <p id="connection-modal-description" class="mb-0">
+                          Plug in the MedWand device, then select Start to choose its serial
+                          device and establish the Web Serial connection.
+                      </p>
+                      <div id="firmware-progress"
+                           class="firmware-progress"
+                           role="status"
+                           aria-live="polite"
+                           hidden>
+                          <div class="firmware-progress-status">
+                              <div class="spinner-border text-primary" aria-hidden="true"></div>
+                              <div>
+                                  <strong id="firmware-progress-stage">Preparing firmware update</strong>
+                                  <div id="firmware-progress-detail" class="text-body-secondary">
+                                      Preparing the MedWand and downloading firmware.
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="alert alert-warning firmware-progress-warning" role="alert">
+                              <strong>Keep the MedWand connected.</strong>
+                              Do not unplug the device, close this page, or suspend the computer until the update completes.
+                          </div>
+                      </div>
+                  </div>
+                  <div id="connection-modal-footer" class="modal-footer">
+                      <button id="connect-button" class="btn btn-success px-4">
+                          Start
+                      </button>
+                  </div>
               </div>
-            </aside>
-            <div class="camera-preview-stage">
-              <canvas id="camera-preview" width="1280" height="720"></canvas
-              ><span id="camera-empty">Select Dermatoscope or Otoscope</span>
-            </div>
-            <div class="mode-panel">
-              <h2>Modes</h2>
-              <div
-                class="mode-control vertical"
-                role="group"
-                aria-label="Camera mode"
-              >
-                <button data-camera-mode="Off" class="btn btn-light active">
-                  <img
-                    src="assets/images/Buttons/Otoscope/None-hover.png"
-                    alt=""
-                  />Off</button
-                ><button data-camera-mode="Dermatoscope" class="btn btn-light">
-                  <img
-                    src="assets/images/Buttons/Otoscope/Dermatoscope-hover.png"
-                    alt=""
-                  />Dermatoscope</button
-                ><button data-camera-mode="Otoscope" class="btn btn-light">
-                  <img
-                    src="assets/images/Buttons/Otoscope/Otoscope-hover.png"
-                    alt=""
-                  />Otoscope
-                </button>
-              </div>
-            </div>
           </div>
-          <div class="sensor-status bg-white">
-            <span class="reading-state">Ready</span>
-          </div>
-          <button
-            id="camera-capture"
-            class="action-button btn btn-success rounded-0"
-            disabled
-          >
-            Capture
-          </button>
-          <p class="camera-hotkeys">Otoscope: Arrow keys move · + / - zoom · Page Up / Page Down change mask radius · Delete resets</p>
-          <div id="camera-captures" hidden aria-hidden="true"></div>
-        </section>
-      </main>
-    </div>
-    <div id="status-bar" class="status-bar">MedWand Browser DECL Sample</div>
+      </div>
 
-    <script src="assets/js/jquery-4.0.0.min.js"></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-      crossorigin="anonymous"
-    ></script>
-    <script src="/assets/js/MWSDK.Javascript.js?v=0.0.0.1&amp;build=af523fa00b88"></script>
-    <script type="module" src="src/app.js?v=20260928.2"></script>
+      <header class="app-header d-flex align-items-center bg-light border-bottom">
+          <button id="home-button"
+                  class="brand-home view-navigation"
+                  data-view="home"
+                  title="Home">
+              <img class="brand-logo" src="assets/images/logo.png" alt="MedWand" />
+          </button>
+          <nav id="tool-nav"
+               class="tool-nav d-flex align-items-center"
+               aria-label="MedWand tools">
+              <button class="nav-item"
+                      data-view="temperature"
+                      title="Thermometer"
+                      disabled>
+                  <img src="assets/images/Buttons/temperature-hover.png"
+                       alt="Thermometer" />
+              </button>
+              <button class="nav-item"
+                      data-view="spo2"
+                      title="Pulse oximeter"
+                      disabled>
+                  <img src="assets/images/Buttons/spo2-hover.png"
+                       alt="Pulse oximeter" />
+              </button>
+              <button class="nav-item"
+                      data-view="stethoscope"
+                      data-feature="stethoscope"
+                      title="Stethoscope"
+                      disabled>
+                  <img src="assets/images/Buttons/stethoscope-hover.png"
+                       alt="Stethoscope" />
+              </button>
+              <button class="nav-item"
+                      data-view="camera"
+                      data-feature="camera"
+                      title="Camera"
+                      disabled>
+                  <img src="assets/images/Buttons/camera-hover.png" alt="Camera" />
+              </button>
+              <button class="nav-item"
+                      data-view="ecg"
+                      data-feature="ecg"
+                      title="ECG"
+                      disabled>
+                  <img src="assets/images/Buttons/ecg-hover.png" alt="ECG" />
+              </button>
+              <span class="toolbar-divider"></span>
+              <button class="nav-item summary-tool view-navigation"
+                      data-view="summary"
+                      title="Summary"
+                      hidden>
+                  <img src="assets/images/Buttons/summary-on.png" alt="Summary" />
+              </button>
+              <button id="disconnect-button"
+                      class="nav-item exit-tool"
+                      title="Disconnect device"
+                      aria-label="Disconnect device"
+                      disabled>
+                  <img src="assets/images/Buttons/exit-off.png" alt="Disconnect" />
+              </button>
+          </nav>
+      </header>
+
+      <div class="app-shell">
+          <main id="workspace" class="workspace">
+              <section id="view-home" class="view active">
+                  <div class="placeholder-info">
+                      <h1>Application Information:</h1>
+                      <hr />
+                      <dl>
+                          <div>
+                              <dt>Company:</dt>
+                              <dd>MedWand Solutions, Inc.</dd>
+                          </div>
+                          <div>
+                              <dt>Product:</dt>
+                              <dd>MedWand DECL Sample Application</dd>
+                          </div>
+                          <div>
+                              <dt>Version:</dt>
+                              <dd>3.2.1</dd>
+                          </div>
+                          <div>
+                              <dt>Build:</dt>
+                              <dd>Browser Sample</dd>
+                          </div>
+                      </dl>
+                      <h1>Device Information:</h1>
+                      <hr />
+                      <dl>
+                          <div>
+                              <dt>ComPort:</dt>
+                              <dd id="port">--</dd>
+                          </div>
+                          <div>
+                              <dt>VendorId:</dt>
+                              <dd id="vendor-id">--</dd>
+                          </div>
+                          <div>
+                              <dt>ProductId:</dt>
+                              <dd id="product-id">--</dd>
+                          </div>
+                          <div>
+                              <dt>DeviceId:</dt>
+                              <dd id="device-id">--</dd>
+                          </div>
+                          <div>
+                              <dt>UDI:</dt>
+                              <dd id="udi">--</dd>
+                          </div>
+                          <div>
+                              <dt>DeviceState:</dt>
+                              <dd id="device-state">Disconnected</dd>
+                          </div>
+                          <div>
+                              <dt>IsConnected:</dt>
+                              <dd id="is-connected">false</dd>
+                          </div>
+                          <div>
+                              <dt>IsInitialized:</dt>
+                              <dd id="is-initialized">false</dd>
+                          </div>
+                          <div>
+                              <dt>IsBootloaderMode:</dt>
+                              <dd id="bootloader-mode">--</dd>
+                          </div>
+                          <div>
+                              <dt>Firmware:</dt>
+                              <dd id="firmware">--</dd>
+                          </div>
+                          <div>
+                              <dt>Generation:</dt>
+                              <dd id="generation">--</dd>
+                          </div>
+                          <div hidden>
+                              <dt>Camera:</dt>
+                              <dd id="camera-model">--</dd>
+                          </div>
+                          <div hidden>
+                              <dt>Stethoscope:</dt>
+                              <dd id="stethoscope-model">--</dd>
+                          </div>
+                          <div>
+                              <dt>License:</dt>
+                              <dd id="license-state">Not configured</dd>
+                          </div>
+                      </dl>
+                  </div>
+              </section>
+
+              <section id="view-summary" class="view summary-view">
+                  <div class="view-heading bg-primary text-white px-3">
+                      <h1>Summary</h1>
+                  </div>
+                  <div class="summary-content">
+                      <section class="summary-section">
+                          <h2>Measurements</h2>
+                          <dl class="summary-measurements">
+                              <div>
+                                  <dt>Temperature</dt>
+                                  <dd id="summary-temperature">--</dd>
+                              </div>
+                              <div>
+                                  <dt>SpO2</dt>
+                                  <dd id="summary-spo2">--</dd>
+                              </div>
+                              <div>
+                                  <dt>Pulse Rate</dt>
+                                  <dd id="summary-pulse">--</dd>
+                              </div>
+                          </dl>
+                      </section>
+                      <section class="summary-section">
+                          <h2>ECG</h2>
+                          <div id="summary-ecg" class="summary-captures">
+                              <p>No ECG strips captured.</p>
+                          </div>
+                      </section>
+                      <section class="summary-section">
+                          <h2>Stethoscope</h2>
+                          <div id="summary-stethoscope" class="summary-captures">
+                              <p>No audio recordings captured.</p>
+                          </div>
+                      </section>
+                      <section class="summary-section">
+                          <h2>Camera</h2>
+                          <div id="summary-camera" class="summary-captures summary-images">
+                              <p>No images captured.</p>
+                          </div>
+                      </section>
+                  </div>
+              </section>
+
+              <section id="view-temperature" class="view sensor-view">
+                  <div class="view-heading bg-primary text-white px-3">
+                      <h1>Thermometer</h1>
+                  </div>
+                  <div class="measurement">
+                      <span id="temperature-value">--</span><small>&deg;F</small>
+                  </div>
+                  <div class="sensor-status bg-white">
+                      <span class="reading-state">Ready</span>
+                  </div>
+                  <button class="sensor-action btn btn-success rounded-0"
+                          data-sensor="temperature">
+                      Start
+                  </button>
+              </section>
+
+              <section id="view-spo2" class="view sensor-view">
+                  <div class="view-heading bg-primary text-white px-3">
+                      <h1>Pulse Oximeter</h1>
+                  </div>
+                  <div class="dual-reading">
+                      <div class="measurement">
+                          <span>SpO2 : <b id="spo2-value">--</b></span>
+                      </div>
+                      <div class="measurement">
+                          <span>Pulse Rate : <b id="pulse-value">--</b></span>
+                      </div>
+                  </div>
+                  <div class="sensor-status bg-white">
+                      <span class="reading-state">Ready</span>
+                  </div>
+                  <button class="sensor-action btn btn-success rounded-0"
+                          data-sensor="spo2">
+                      Start
+                  </button>
+              </section>
+
+              <section id="view-ecg" class="view sensor-view wide-view">
+                  <div class="view-heading bg-primary text-white px-3">
+                      <h1>ECG</h1>
+                  </div>
+                  <div id="ecg-stage" class="ecg-stage">
+                      <canvas id="ecg-canvas" width="1000" height="481"></canvas>
+                  </div>
+                  <div class="sensor-status bg-white">
+                      <span class="reading-state">Ready</span>
+                  </div>
+                  <button id="ecg-record"
+                          class="action-button btn btn-success rounded-0"
+                          disabled>
+                      Start Recording
+                  </button>
+                  <div id="ecg-captures" hidden aria-hidden="true"></div>
+              </section>
+
+              <section id="view-stethoscope" class="view sensor-view">
+                  <div class="view-heading bg-primary text-white px-3">
+                      <h1>Stethoscope</h1>
+                  </div>
+                  <div class="stethoscope-stage">
+                      <div class="stethoscope-preview">
+                          <details id="stethoscope-recordings" class="stethoscope-recordings" hidden>
+                              <summary>Recordings</summary>
+                              <div id="stethoscope-captures" class="summary-captures">
+                                  <p>No audio recordings captured.</p>
+                              </div>
+                          </details>
+                      </div>
+                      <aside class="stethoscope-mode-panel" aria-label="Stethoscope modes">
+                          <h2>Modes</h2>
+                          <div class="stethoscope-modes" role="group" aria-label="Stethoscope mode">
+                              <button data-steth-mode="Off" class="btn btn-light active">
+                                  <img src="assets/images/Buttons/Stethoscope/None-hover.png" alt="" />Off
+                              </button>
+                              <button data-steth-mode="Heart" class="btn btn-light">
+                                  <img src="assets/images/Buttons/Stethoscope/Heart-hover.png" alt="" />Heart
+                              </button>
+                              <button data-steth-mode="Lungs" class="btn btn-light">
+                                  <img src="assets/images/Buttons/Stethoscope/Lung-hover.png" alt="" />Lungs
+                              </button>
+                              <button data-steth-mode="Bowel" class="btn btn-light">
+                                  <img src="assets/images/Buttons/Stethoscope/Bowel-hover.png" alt="" />Bowel
+                              </button>
+                          </div>
+                      </aside>
+                      <div class="stethoscope-audio-controls">
+                          <label for="steth-volume">
+                              Volume
+                              <input id="steth-volume" type="range" min="0" max="100" value="50" disabled />
+                          </label>
+                          <label for="steth-gain">
+                              Gain
+                              <input id="steth-gain" type="range" min="0" max="100" value="30" disabled />
+                          </label>
+                      </div>
+                  </div>
+                  <div class="sensor-status bg-white">
+                      <span class="reading-state">Ready</span>
+                  </div>
+                  <button id="steth-record"
+                          class="action-button btn btn-success rounded-0"
+                          disabled>
+                      Start Recording
+                  </button>
+              </section>
+              <section id="view-camera" class="view sensor-view wide-view">
+                  <div class="view-heading bg-primary text-white px-3">
+                      <h1>Camera</h1>
+                  </div>
+                  <div class="camera-layout">
+                      <aside class="camera-settings" aria-label="Camera controls">
+                          <h2>Controls</h2>
+                          <div id="camera-light-controls" class="camera-control-group" hidden>
+                              <label for="camera-light">LED Intensity</label>
+                              <input id="camera-light" type="range" min="0" max="1" value="0" />
+                          </div>
+                          <div id="camera-focus-controls" class="camera-control-group" hidden>
+                              <span>Focus</span>
+                              <button id="camera-focus-auto" class="btn btn-light btn-sm" type="button">Auto</button>
+                              <button id="camera-focus-manual" class="btn btn-light btn-sm" type="button">Manual</button>
+                              <label id="camera-focus-value-label" for="camera-focus-value" hidden>Focus value</label>
+                              <input id="camera-focus-value" type="range" hidden />
+                          </div>
+                          <div id="camera-otoscope-controls" class="camera-control-group otoscope-controls" hidden>
+                              <span>Move</span>
+                              <div class="direction-pad">
+                                  <button class="btn btn-light btn-sm" type="button" data-camera-command="move-up" aria-label="Move up" title="Move up">↑</button>
+                                  <div>
+                                      <button class="btn btn-light btn-sm" type="button" data-camera-command="move-left" aria-label="Move left" title="Move left">←</button>
+                                      <button class="btn btn-light btn-sm" type="button" data-camera-command="move-right" aria-label="Move right" title="Move right">→</button>
+                                  </div>
+                                  <button class="btn btn-light btn-sm" type="button" data-camera-command="move-down" aria-label="Move down" title="Move down">↓</button>
+                              </div>
+                              <label>Zoom</label>
+                              <div>
+                                  <button class="btn btn-light btn-sm" type="button" data-camera-command="zoom-out">−</button>
+                                  <button class="btn btn-light btn-sm" type="button" data-camera-command="zoom-in">+</button>
+                              </div>
+                              <label>Radius</label>
+                              <div>
+                                  <button class="btn btn-light btn-sm" type="button" data-camera-command="radius-decrease">−</button>
+                                  <button class="btn btn-light btn-sm" type="button" data-camera-command="radius-increase">+</button>
+                              </div>
+                              <button class="btn btn-light btn-sm" type="button" data-camera-command="reset">Reset</button>
+                          </div>
+                      </aside>
+                      <div class="camera-preview-stage">
+                          <canvas id="camera-preview" width="1280" height="720"></canvas><span id="camera-empty">Select Dermatoscope or Otoscope</span>
+                      </div>
+                      <div class="mode-panel">
+                          <h2>Modes</h2>
+                          <div class="mode-control vertical"
+                               role="group"
+                               aria-label="Camera mode">
+                              <button data-camera-mode="Off" class="btn btn-light active">
+                                  <img src="assets/images/Buttons/Otoscope/None-hover.png"
+                                       alt="" />Off
+                              </button><button data-camera-mode="Dermatoscope" class="btn btn-light">
+                                  <img src="assets/images/Buttons/Otoscope/Dermatoscope-hover.png"
+                                       alt="" />Dermatoscope
+                              </button><button data-camera-mode="Otoscope" class="btn btn-light">
+                                  <img src="assets/images/Buttons/Otoscope/Otoscope-hover.png"
+                                       alt="" />Otoscope
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="sensor-status bg-white">
+                      <span class="reading-state">Ready</span>
+                  </div>
+                  <button id="camera-capture"
+                          class="action-button btn btn-success rounded-0"
+                          disabled>
+                      Capture
+                  </button>
+                  <p class="camera-hotkeys">Otoscope: Arrow keys move · + / - zoom · Page Up / Page Down change mask radius · Delete resets</p>
+                  <div id="camera-captures" hidden aria-hidden="true"></div>
+              </section>
+          </main>
+      </div>
+      <div id="status-bar" class="status-bar">MedWand Browser DECL Sample</div>
+
+      <script src="assets/js/jquery-4.0.0.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+              integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+              crossorigin="anonymous"></script>
+      <script type="module" src="/assets/js/sample-app.js"></script>
   </body>
 </html>
