@@ -4,7 +4,7 @@ import { createTemperatureSensor } from "./sensors/temperature.js";
 import { createPulseOximeterSensor } from "./sensors/pulse-oximeter.js";
 import { createEcgSensor } from "./sensors/ecg.js";
 import { createStethoscopeSensor } from "./sensors/stethoscope.js";
-import { createCameraSensor } from "./sensors/camera.js?v=20261030.1";
+import { createCameraSensor } from "./sensors/camera.js";
 
 (() => {
   "use strict";
